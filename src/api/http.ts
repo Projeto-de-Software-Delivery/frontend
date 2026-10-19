@@ -5,7 +5,8 @@ import { getAccessToken } from '../auth/tokenProvider';
 /** true = usa os dados falsos de mock.ts. Para usar o backend: VITE_USE_MOCK=false no .env */
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+// Sempre /api: na Vercel o vercel.json repassa para o gateway, no dev quem repassa é o proxy do vite.config.ts.
+const API_URL = '/api';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
