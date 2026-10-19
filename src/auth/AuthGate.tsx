@@ -1,5 +1,5 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { AppRoutes } from '../AppRoutes';
 import { LoginButton } from './LoginButton';
 import { setAccessTokenGetter } from './tokenProvider';
@@ -8,7 +8,9 @@ import { setAccessTokenGetter } from './tokenProvider';
 export function AuthGate() {
   const { isAuthenticated, isLoading, error, getAccessTokenSilently } = useAuth0();
 
-  useEffect(() => {
+  // useLayoutEffect roda antes dos useEffect das páginas, que já buscam dados ao montar.
+  // Com useEffect, as primeiras requisições saíam sem token.
+  useLayoutEffect(() => {
     setAccessTokenGetter(isAuthenticated ? () => getAccessTokenSilently() : null);
     return () => setAccessTokenGetter(null);
   }, [isAuthenticated, getAccessTokenSilently]);
