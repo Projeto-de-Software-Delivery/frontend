@@ -1,3 +1,4 @@
+import { ArrowLeft, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { adicionarAoCarrinho } from '../../api/carrinho';
@@ -27,13 +28,13 @@ export function Loja() {
 
   return (
     <>
-      <Link to={`/cliente/${clienteId}`} className="voltar">← Lojas</Link>
+      <Link to={`/cliente/${clienteId}`} className="voltar"><ArrowLeft size={16} /> Lojas</Link>
 
       <section className="cabecalho-loja">
         <Foto foto={produtos.dados?.[0]?.foto ?? '🏪'} id={lojaId} grande />
         <div>
           <h1>{loja.dados?.nome}</h1>
-          <p className="nota">📍 {loja.dados?.endereco}</p>
+          <p className="nota com-icone"><MapPin size={15} /> {loja.dados?.endereco}</p>
         </div>
       </section>
 

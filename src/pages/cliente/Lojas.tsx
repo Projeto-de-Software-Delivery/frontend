@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { buscarCliente } from '../../api/clientes';
@@ -21,9 +22,12 @@ export function Lojas() {
   return (
     <>
       <section className="boas-vindas">
-        <h1>Olá{primeiroNome && `, ${primeiroNome}`} 👋</h1>
+        <h1>Olá{primeiroNome && `, ${primeiroNome}`}</h1>
         <p>O que vai pedir hoje?</p>
-        <input placeholder="Buscar loja…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <div className="busca">
+          <Search size={18} />
+          <input placeholder="Buscar loja…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        </div>
       </section>
 
       {lojas.carregando && <p className="nota">Carregando…</p>}

@@ -1,3 +1,4 @@
+import { RotateCw } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { listarLojas } from '../../api/lojas';
 import { listarPedidosDoCliente } from '../../api/pedidos';
@@ -17,7 +18,7 @@ export function Pedidos() {
     <>
       <div className="linha">
         <h1>Meus pedidos</h1>
-        <button className="botao-claro" onClick={pedidos.recarregar}>↻ Atualizar</button>
+        <button className="botao-claro" onClick={pedidos.recarregar}><RotateCw size={15} /> Atualizar</button>
       </div>
       {pedidos.erro && <p className="erro">{pedidos.erro}</p>}
       {pedidos.dados?.length === 0 && <p className="vazio">🧾<br />Você ainda não fez nenhum pedido.</p>}
