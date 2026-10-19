@@ -1,6 +1,7 @@
 import { Bike } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { USE_MOCK } from '../api/http';
+import { LogoutButton } from '../auth/LogoutButton';
 
 interface Props {
   titulo: string;
@@ -26,6 +27,7 @@ export function Layout({ titulo, links }: Props) {
             ))}
           </nav>
           {USE_MOCK && <span className="tag-mock" title="Dados falsos, salvos no navegador">Modo demo</span>}
+          {!USE_MOCK && <LogoutButton />}
         </div>
       </header>
       <main className="pagina">

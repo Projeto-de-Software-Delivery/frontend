@@ -1,5 +1,7 @@
 // Chamada HTTP de verdade para o backend (via API Gateway).
 
+import { getAccessToken } from '../auth/tokenProvider';
+
 /** true = usa os dados falsos de mock.ts. Para usar o backend: VITE_USE_MOCK=false no .env */
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
@@ -12,10 +14,16 @@ export class ApiError extends Error {
 }
 
 export async function http<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
+  const headers: Record<string, string> = corpo ? { 'Content-Type': 'application/json' } : {};
+
+  if (!USE_MOCK) {
+    const token = await getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const resposta = await fetch(API_URL + caminho, {
     method: metodo,
-    headers: corpo ? { 'Content-Type': 'application/json' } : undefined,
-    // TODO: quando o login existir, mandar o JWT: Authorization: `Bearer ${token}`
+    headers,
     body: corpo ? JSON.stringify(corpo) : undefined,
   });
 
