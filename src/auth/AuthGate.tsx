@@ -2,6 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useLayoutEffect } from 'react';
 import { AppRoutes } from '../AppRoutes';
 import { LoginButton } from './LoginButton';
+import { TelaAviso, TelaLogin } from './TelaLogin';
 import { setAccessTokenGetter } from './tokenProvider';
 
 /** Só é renderizado quando VITE_USE_MOCK=false (ver App.tsx), dentro do Auth0Provider. */
@@ -16,28 +17,24 @@ export function AuthGate() {
   }, [isAuthenticated, getAccessTokenSilently]);
 
   if (isLoading) {
-    return <div className="pagina">Carregando...</div>;
+    return (
+      <TelaAviso>
+        <span className="carregando" aria-label="Carregando" />
+      </TelaAviso>
+    );
   }
 
   if (error) {
     return (
-      <div className="pagina">
-        <h1>Erro ao autenticar</h1>
-        <p>{error.message}</p>
-      </div>
+      <TelaAviso titulo="Não foi possível entrar">
+        <p className="erro">{error.message}</p>
+        <LoginButton />
+      </TelaAviso>
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="pagina">
-        <div className="card bloco" style={{ maxWidth: 360, margin: '4rem auto', textAlign: 'center' }}>
-          <h1>Delivery</h1>
-          <p>Entre com sua conta para continuar.</p>
-          <LoginButton />
-        </div>
-      </div>
-    );
+    return <TelaLogin />;
   }
 
   return <AppRoutes />;
