@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { criarCliente } from '../api/clientes';
+import { criarEntregador } from '../api/entregadores';
 import { criarLoja } from '../api/lojas';
+import type { Veiculo } from '../types';
 import { useAcao } from '../util';
 
 // POST /clientes
@@ -66,6 +68,42 @@ export function CadastroLoja() {
         <label>Nome<input required {...campo('nome')} /></label>
         <label>CNPJ<input required placeholder="00.000.000/0000-00" {...campo('cnpj')} /></label>
         <label>Endereço<input required {...campo('endereco')} /></label>
+        {erro && <p className="erro">{erro}</p>}
+        <button className="botao">Cadastrar</button>
+      </form>
+    </main>
+  );
+}
+
+// POST /entregadores  (começa DISPONIVEL)
+export function CadastroEntregador() {
+  const navigate = useNavigate();
+  const [nome, setNome] = useState('');
+  const [veiculo, setVeiculo] = useState<Veiculo>('MOTO');
+  const { erro, executar } = useAcao();
+
+  function enviar(e: FormEvent) {
+    e.preventDefault();
+    executar(async () => {
+      const entregador = await criarEntregador({ nome, veiculo });
+      navigate(`/entregador/${entregador.id}`);
+    });
+  }
+
+  return (
+    <main className="cadastro">
+      <Link to="/" className="voltar">← Voltar</Link>
+      <form className="card formulario" onSubmit={enviar}>
+        <h1>Novo entregador</h1>
+        <label>Nome<input required maxLength={100} value={nome} onChange={(e) => setNome(e.target.value)} /></label>
+        <label>
+          Veículo
+          <select value={veiculo} onChange={(e) => setVeiculo(e.target.value as Veiculo)}>
+            <option value="MOTO">Moto</option>
+            <option value="CARRO">Carro</option>
+            <option value="BICICLETA">Bicicleta</option>
+          </select>
+        </label>
         {erro && <p className="erro">{erro}</p>}
         <button className="botao">Cadastrar</button>
       </form>

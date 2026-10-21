@@ -1,12 +1,13 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { CadastroCliente, CadastroLoja } from './pages/Cadastro';
+import { CadastroCliente, CadastroEntregador, CadastroLoja } from './pages/Cadastro';
 import { Home } from './pages/Home';
 import { Carrinho } from './pages/cliente/Carrinho';
 import { Loja } from './pages/cliente/Loja';
 import { Lojas } from './pages/cliente/Lojas';
 import { Pedidos } from './pages/cliente/Pedidos';
-import { Entregadores } from './pages/entregador/Entregadores';
+import { MinhaEntrega } from './pages/entregador/MinhaEntrega';
+import { Perfil } from './pages/entregador/Perfil';
 import { PedidosPendentes } from './pages/loja/PedidosPendentes';
 import { Produtos } from './pages/loja/Produtos';
 
@@ -37,12 +38,26 @@ function AreaLoja() {
   );
 }
 
+function AreaEntregador() {
+  const { entregadorId } = useParams();
+  return (
+    <Layout
+      titulo="Entregador"
+      links={[
+        { para: `/entregador/${entregadorId}`, texto: 'Minha entrega' },
+        { para: `/entregador/${entregadorId}/perfil`, texto: 'Meu perfil' },
+      ]}
+    />
+  );
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/cadastro/cliente" element={<CadastroCliente />} />
       <Route path="/cadastro/loja" element={<CadastroLoja />} />
+      <Route path="/cadastro/entregador" element={<CadastroEntregador />} />
 
       <Route path="/cliente/:clienteId" element={<AreaCliente />}>
         <Route index element={<Lojas />} />
@@ -56,8 +71,9 @@ export function AppRoutes() {
         <Route path="produtos" element={<Produtos />} />
       </Route>
 
-      <Route path="/entregadores" element={<Layout titulo="Entregadores" links={[]} />}>
-        <Route index element={<Entregadores />} />
+      <Route path="/entregador/:entregadorId" element={<AreaEntregador />}>
+        <Route index element={<MinhaEntrega />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

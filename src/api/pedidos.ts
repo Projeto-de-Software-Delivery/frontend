@@ -115,3 +115,45 @@ export function recusarPedido(lojaId: number, pedidoId: number): Promise<Pedido>
   }
   return http('POST', `/lojas/${lojaId}/pedidos/${pedidoId}/recusar`);
 }
+
+// ===== App do entregador =====
+// ATENÇÃO: estas 3 rotas ainda NÃO existem no backend (ver TODO.md, "App Entregador").
+// Hoje retirada/entrega só chegam por /eventos/... (serviço → serviço).
+// No modo demo funcionam igual à máquina de estados da proposta.
+
+// GET /pedidos?entregadorId={id}  (rota proposta)
+export function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
+  if (USE_MOCK) return simular((banco) => banco.pedidos.filter((p) => p.entregadorId === entregadorId));
+  return http('GET', `/pedidos?entregadorId=${entregadorId}`);
+}
+
+// POST /pedidos/{id}/retirar  (rota proposta) → EM_ENTREGA, publica pedido.retirado
+export function confirmarRetirada(pedidoId: number, entregadorId: string): Promise<Pedido> {
+  if (USE_MOCK) {
+    return simular((banco) => {
+      const pedido = acharOu404(banco.pedidos, pedidoId, 'Pedido');
+      if (pedido.entregadorId !== entregadorId) erro(403, 'Este pedido não é seu');
+      if (pedido.status !== 'ENTREGA_ACEITA') erro(409, `Pedido está em ${pedido.status}`);
+      pedido.status = 'EM_ENTREGA';
+      return pedido;
+    });
+  }
+  return http('POST', `/pedidos/${pedidoId}/retirar`, { entregadorId });
+}
+
+// POST /pedidos/{id}/entregar  (rota proposta) → ENTREGUE se o PIN bater, publica pedido.entregue
+export function confirmarEntrega(pedidoId: number, entregadorId: string, pin: string): Promise<Pedido> {
+  if (USE_MOCK) {
+    return simular((banco) => {
+      const pedido = acharOu404(banco.pedidos, pedidoId, 'Pedido');
+      if (pedido.entregadorId !== entregadorId) erro(403, 'Este pedido não é seu');
+      if (pedido.status !== 'EM_ENTREGA') erro(409, `Pedido está em ${pedido.status}`);
+      if (pedido.pin !== pin) erro(422, 'Código de entrega incorreto');
+      pedido.status = 'ENTREGUE';
+      // o entregador fica livre para a próxima corrida
+      acharOu404(banco.entregadores, entregadorId, 'Entregador').status = 'DISPONIVEL';
+      return pedido;
+    });
+  }
+  return http('POST', `/pedidos/${pedidoId}/entregar`, { entregadorId, pin });
+}

@@ -2,6 +2,7 @@ import { ArrowRight, Bike, ShoppingBag, Store } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { listarClientes } from '../api/clientes';
+import { listarEntregadores } from '../api/entregadores';
 import { USE_MOCK } from '../api/http';
 import { listarLojas } from '../api/lojas';
 import { resetarMock } from '../api/mock';
@@ -13,8 +14,10 @@ export function Home() {
   const navigate = useNavigate();
   const clientes = useCarregar(() => listarClientes(), []);
   const lojas = useCarregar(() => listarLojas(), []);
+  const entregadores = useCarregar(() => listarEntregadores(), []);
   const [clienteId, setClienteId] = useState('');
   const [lojaId, setLojaId] = useState('');
+  const [entregadorId, setEntregadorId] = useState('');
 
   return (
     <div className="home">
@@ -92,16 +95,25 @@ export function Home() {
 
           <div className="card card-home">
             <span className="icone"><Bike size={22} /></span>
-            <h3>Entregadores</h3>
-            <p>Cadastro e disponibilidade de quem faz as entregas.</p>
-            <button className="botao" onClick={() => navigate('/entregadores')}>
+            <h3>Sou entregador</h3>
+            <p>Ficar disponível, retirar na loja e entregar com o código do cliente.</p>
+            <select value={entregadorId} onChange={(e) => setEntregadorId(e.target.value)}>
+              <option value="">Escolha um entregador…</option>
+              {entregadores.dados?.map((en) => (
+                <option key={en.id} value={en.id}>{en.nome}</option>
+              ))}
+            </select>
+            <button className="botao" disabled={!entregadorId} onClick={() => navigate(`/entregador/${entregadorId}`)}>
               Entrar <ArrowRight size={16} />
             </button>
+            <Link to="/cadastro/entregador" className="link-pequeno">Quero ser entregador</Link>
           </div>
         </div>
       </section>
 
-      {(clientes.erro || lojas.erro) && <p className="erro">{clientes.erro || lojas.erro}</p>}
+      {(clientes.erro || lojas.erro || entregadores.erro) && (
+        <p className="erro">{clientes.erro || lojas.erro || entregadores.erro}</p>
+      )}
 
       {USE_MOCK && (
         <p className="nota rodape">

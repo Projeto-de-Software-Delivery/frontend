@@ -96,17 +96,25 @@ const DADOS_INICIAIS: Banco = {
       itens: [{ produtoId: 2, quantidade: 2, precoUnitario: 38.5, subtotal: 77 }],
       total: 77, enderecoEntrega: { rua: 'Av. Santo Amaro, 1500 - Itaim Bibi', ...insper }, dataCriacao: minutosAtras(1),
     },
+    {
+      id: 53, clienteId: 3, lojaId: 4, status: 'ENTREGA_ACEITA', pin: '5562', entregadorId: 'a1b2c3d4-0000-4000-8000-000000000003',
+      itens: [
+        { produtoId: 13, quantidade: 1, precoUnitario: 59, subtotal: 59 },
+        { produtoId: 15, quantidade: 2, precoUnitario: 7, subtotal: 14 },
+      ],
+      total: 73, enderecoEntrega: { rua: 'R. Casa do Ator, 275 - Vila Olímpia', ...insper }, dataCriacao: minutosAtras(18),
+    },
   ],
 
   entregadores: [
     { id: 'a1b2c3d4-0000-4000-8000-000000000001', nome: 'Carlos Lima', veiculo: 'MOTO', status: 'DISPONIVEL', created_at: agora, updated_at: agora },
     { id: 'a1b2c3d4-0000-4000-8000-000000000002', nome: 'Bia Santos', veiculo: 'BICICLETA', status: 'INDISPONIVEL', created_at: agora, updated_at: agora },
-    { id: 'a1b2c3d4-0000-4000-8000-000000000003', nome: 'Diego Rocha', veiculo: 'CARRO', status: 'DISPONIVEL', created_at: agora, updated_at: agora },
+    { id: 'a1b2c3d4-0000-4000-8000-000000000003', nome: 'Diego Rocha', veiculo: 'CARRO', status: 'EM_ENTREGA', created_at: agora, updated_at: agora },
   ],
 };
 
 // Mudou os dados iniciais? Troque a versão da chave para o navegador carregar os novos.
-const CHAVE = 'delivery-mock-v2';
+const CHAVE = 'delivery-mock-v3';
 
 function lerBanco(): Banco {
   try {
