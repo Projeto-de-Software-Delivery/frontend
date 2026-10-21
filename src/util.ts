@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PedidoStatus, StatusEntregador } from './types';
-
+ 
 export const dinheiro = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
