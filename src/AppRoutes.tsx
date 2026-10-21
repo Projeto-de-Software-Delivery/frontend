@@ -7,7 +7,6 @@ import { Loja } from './pages/cliente/Loja';
 import { Lojas } from './pages/cliente/Lojas';
 import { Pedidos } from './pages/cliente/Pedidos';
 import { MinhaEntrega } from './pages/entregador/MinhaEntrega';
-import { Perfil } from './pages/entregador/Perfil';
 import { PedidosPendentes } from './pages/loja/PedidosPendentes';
 import { Produtos } from './pages/loja/Produtos';
 
@@ -45,7 +44,6 @@ function AreaEntregador() {
       titulo="Entregador"
       links={[
         { para: `/entregador/${entregadorId}`, texto: 'Minha entrega' },
-        { para: `/entregador/${entregadorId}/perfil`, texto: 'Meu perfil' },
       ]}
     />
   );
@@ -73,7 +71,6 @@ export function AppRoutes() {
 
       <Route path="/entregador/:entregadorId" element={<AreaEntregador />}>
         <Route index element={<MinhaEntrega />} />
-        <Route path="perfil" element={<Perfil />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
