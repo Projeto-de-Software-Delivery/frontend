@@ -32,7 +32,9 @@ export async function http<T>(metodo: string, caminho: string, corpo?: unknown):
     const erro = await resposta.json().catch(() => null);
     // Spring manda { message }, FastAPI manda { detail } (texto, ou lista no erro 422)
     const detalhe = Array.isArray(erro?.detail) ? erro.detail[0]?.msg : erro?.detail;
-    throw new ApiError(resposta.status, erro?.message || detalhe || `Erro ${resposta.status}`);
+    // Validação do Spring (400) chega sem message: pelo menos diz que é dado inválido
+    const padrao = resposta.status === 400 ? 'Dados inválidos, confira os campos (erro 400)' : `Erro ${resposta.status}`;
+    throw new ApiError(resposta.status, erro?.message || detalhe || padrao);
   }
 
   if (resposta.status === 204) return undefined as T;

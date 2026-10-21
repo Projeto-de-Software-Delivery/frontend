@@ -4,7 +4,7 @@
 //   /lojas/{lojaId}/pedidos/...
 
 import type { AceitarPedidoRequest, CriarPedidoRequest, Pedido, PedidoStatus } from '../types';
-import { http, USE_MOCK } from './http';
+import { ApiError, http, USE_MOCK } from './http';
 import { acharOu404, erro, novoId, simular } from './mock';
 
 // POST /clientes/{clienteId}/pedidos
@@ -122,9 +122,18 @@ export function recusarPedido(lojaId: number, pedidoId: number): Promise<Pedido>
 // No modo demo funcionam igual à máquina de estados da proposta.
 
 // GET /pedidos?entregadorId={id}  (rota proposta)
-export function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
+// Enquanto o pedidos-lojas não tiver a rota, o 404 vira "nenhuma corrida" em vez de erro na tela.
+export async function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
   if (USE_MOCK) return simular((banco) => banco.pedidos.filter((p) => p.entregadorId === entregadorId));
-  return http('GET', `/pedidos?entregadorId=${entregadorId}`);
+  try {
+    return await http<Pedido[]>('GET', `/pedidos?entregadorId=${entregadorId}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) {
+      console.warn('GET /pedidos?entregadorId= ainda não existe no backend (ver TODO.md)');
+      return [];
+    }
+    throw e;
+  }
 }
 
 // POST /pedidos/{id}/retirar  (rota proposta) → EM_ENTREGA, publica pedido.retirado

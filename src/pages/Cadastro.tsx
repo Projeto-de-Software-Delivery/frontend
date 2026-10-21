@@ -54,8 +54,10 @@ export function CadastroLoja() {
   function enviar(e: FormEvent) {
     e.preventDefault();
     executar(async () => {
-      // o backend só aceita os 14 números, sem pontos e barras
-      const loja = await criarLoja({ ...form, cnpj: form.cnpj.replace(/\D/g, '') });
+      // o backend só aceita os 14 números, sem pontos e barras, e responde 400 sem mensagem
+      const cnpj = form.cnpj.replace(/\D/g, '');
+      if (cnpj.length !== 14) throw new Error(`O CNPJ precisa ter 14 números (você digitou ${cnpj.length})`);
+      const loja = await criarLoja({ nome: form.nome.trim(), cnpj, endereco: form.endereco.trim() });
       navigate(`/loja/${loja.id}`);
     });
   }
@@ -65,9 +67,9 @@ export function CadastroLoja() {
       <Link to="/" className="voltar">← Voltar</Link>
       <form className="card formulario" onSubmit={enviar}>
         <h1>Nova loja</h1>
-        <label>Nome<input required {...campo('nome')} /></label>
-        <label>CNPJ<input required placeholder="00.000.000/0000-00" {...campo('cnpj')} /></label>
-        <label>Endereço<input required {...campo('endereco')} /></label>
+        <label>Nome<input required pattern=".*\S.*" {...campo('nome')} /></label>
+        <label>CNPJ<input required inputMode="numeric" placeholder="00.000.000/0000-00" {...campo('cnpj')} /></label>
+        <label>Endereço<input required pattern=".*\S.*" {...campo('endereco')} /></label>
         {erro && <p className="erro">{erro}</p>}
         <button className="botao">Cadastrar</button>
       </form>
