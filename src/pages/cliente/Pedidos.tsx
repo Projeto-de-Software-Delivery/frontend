@@ -4,13 +4,19 @@ import { listarLojas } from '../../api/lojas';
 import { listarPedidosDoCliente } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
 import { Progresso } from '../../components/Progresso';
-import { dataHora, dinheiro, NOME_STATUS_PEDIDO, nomePorId, useCarregar } from '../../util';
+import type { Pedido } from '../../types';
+import { dataHora, dinheiro, NOME_STATUS_PEDIDO, nomePorId, useAtualizarACada, useCarregar } from '../../util';
+
+const emAndamento = (pedido: Pedido) => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO';
 
 export function Pedidos() {
   const clienteId = Number(useParams().clienteId);
   const pedidos = useCarregar(() => listarPedidosDoCliente(clienteId), [clienteId]);
   const lojas = useCarregar(() => listarLojas(), []);
   const produtos = useCarregar(() => listarProdutos(), []);
+
+  // acompanhamento: enquanto tiver pedido em andamento, busca o status de novo a cada 10s
+  useAtualizarACada(pedidos.recarregar, 10_000, (pedidos.dados ?? []).some(emAndamento));
 
   const maisRecentesPrimeiro = [...(pedidos.dados ?? [])].sort((a, b) => b.id - a.id);
 
@@ -24,7 +30,6 @@ export function Pedidos() {
       {pedidos.dados?.length === 0 && <p className="vazio">🧾<br />Você ainda não fez nenhum pedido.</p>}
 
       {maisRecentesPrimeiro.map((pedido) => {
-        const emAndamento = pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO';
         return (
           <div key={pedido.id} className="card bloco">
             <div className="linha">
@@ -45,7 +50,7 @@ export function Pedidos() {
 
             <div className="linha">
               <strong>{dinheiro(pedido.total)}</strong>
-              {emAndamento && <span className="pin">Código de entrega <strong>{pedido.pin}</strong></span>}
+              {emAndamento(pedido) && <span className="pin">Código de entrega <strong>{pedido.pin}</strong></span>}
             </div>
           </div>
         );

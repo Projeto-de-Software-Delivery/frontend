@@ -61,6 +61,20 @@ export function useCarregar<T>(buscar: () => Promise<T>, dependencias: unknown[]
 }
 
 /**
+ * Chama `atualizar` a cada `ms` enquanto `ativo` for true. Pula quando a aba está em segundo plano.
+ * Ex.: useAtualizarACada(pedidos.recarregar, 10_000, temPedidoEmAndamento);
+ */
+export function useAtualizarACada(atualizar: () => void, ms: number, ativo: boolean) {
+  useEffect(() => {
+    if (!ativo) return;
+    const id = setInterval(() => {
+      if (!document.hidden) atualizar();
+    }, ms);
+    return () => clearInterval(id);
+  }, [atualizar, ms, ativo]);
+}
+
+/**
  * Roda uma ação (salvar, excluir…) e guarda a mensagem se der erro.
  * Ex.: const { erro, executar } = useAcao();  executar(() => deletarProduto(id));
  * Devolve true se deu certo.
