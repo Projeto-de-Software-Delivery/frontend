@@ -1,5 +1,5 @@
 import { RotateCw } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { buscarEntregador, mudarStatusEntregador } from '../../api/entregadores';
 import { listarLojas } from '../../api/lojas';
@@ -7,7 +7,9 @@ import { confirmarEntrega, confirmarRetirada, listarPedidosDoEntregador } from '
 import { listarProdutos } from '../../api/produtos';
 import { Progresso } from '../../components/Progresso';
 import type { Pedido } from '../../types';
-import { dataHora, dinheiro, NOME_STATUS_ENTREGADOR, NOME_STATUS_PEDIDO, useAcao, useCarregar } from '../../util';
+import {
+  dataHora, dinheiro, NOME_STATUS_ENTREGADOR, NOME_STATUS_PEDIDO, useAcao, useAtualizarACada, useCarregar,
+} from '../../util';
 
 /** App do entregador: disponibilidade, corrida atual (retirada → entrega com PIN) e histórico. */
 export function MinhaEntrega() {
@@ -22,10 +24,13 @@ export function MinhaEntrega() {
   const atual = pedidos.dados?.find((p) => p.status === 'ENTREGA_ACEITA' || p.status === 'EM_ENTREGA');
   const finalizadas = (pedidos.dados ?? []).filter((p) => p.status === 'ENTREGUE').sort((a, b) => b.id - a.id);
 
-  function recarregarTudo() {
+  const recarregarTudo = useCallback(() => {
     entregador.recarregar();
     pedidos.recarregar();
-  }
+  }, [entregador.recarregar, pedidos.recarregar]);
+
+  // disponível ou em corrida: busca de novo a cada 10s pra corrida nova (ou mudança de status) aparecer sozinha
+  useAtualizarACada(recarregarTudo, 10_000, entregador.dados?.status !== 'INDISPONIVEL');
 
   // PATCH /entregadores/{id}/status — só alterna entre disponível e indisponível;
   // EM_ENTREGA quem coloca é o sistema ao atribuir uma corrida.
