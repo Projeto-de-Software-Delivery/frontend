@@ -4,7 +4,7 @@
 //   /lojas/{lojaId}/pedidos/...
 
 import type { AceitarPedidoRequest, CriarPedidoRequest, Pedido, PedidoStatus } from '../types';
-import { ApiError, http, USE_MOCK } from './http';
+import { http, USE_MOCK } from './http';
 import { acharOu404, erro, novoId, simular } from './mock';
 
 // POST /clientes/{clienteId}/pedidos
@@ -117,26 +117,14 @@ export function recusarPedido(lojaId: number, pedidoId: number): Promise<Pedido>
 }
 
 // ===== App do entregador =====
-// ATENÇÃO: estas 3 rotas ainda NÃO existem no backend (ver TODO.md, "App Entregador").
-// Hoje retirada/entrega só chegam por /eventos/... (serviço → serviço).
-// No modo demo funcionam igual à máquina de estados da proposta.
 
-// GET /pedidos?entregadorId={id}  (rota proposta)
-// Enquanto o pedidos-lojas não tiver a rota, o 404 vira "nenhuma corrida" em vez de erro na tela.
-export async function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
+// GET /pedidos?entregadorId={id}
+export function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
   if (USE_MOCK) return simular((banco) => banco.pedidos.filter((p) => p.entregadorId === entregadorId));
-  try {
-    return await http<Pedido[]>('GET', `/pedidos?entregadorId=${entregadorId}`);
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 404) {
-      console.warn('GET /pedidos?entregadorId= ainda não existe no backend (ver TODO.md)');
-      return [];
-    }
-    throw e;
-  }
+  return http('GET', `/pedidos?entregadorId=${encodeURIComponent(entregadorId)}`);
 }
 
-// POST /pedidos/{id}/retirar  (rota proposta) → EM_ENTREGA, publica pedido.retirado
+// POST /pedidos/{id}/retirar → EM_ENTREGA, publica pedido.retirado
 export function confirmarRetirada(pedidoId: number, entregadorId: string): Promise<Pedido> {
   if (USE_MOCK) {
     return simular((banco) => {
@@ -150,7 +138,7 @@ export function confirmarRetirada(pedidoId: number, entregadorId: string): Promi
   return http('POST', `/pedidos/${pedidoId}/retirar`, { entregadorId });
 }
 
-// POST /pedidos/{id}/entregar  (rota proposta) → ENTREGUE se o PIN bater, publica pedido.entregue
+// POST /pedidos/{id}/entregar → ENTREGUE se o PIN bater (senão 422), publica pedido.entregue
 export function confirmarEntrega(pedidoId: number, entregadorId: string, pin: string): Promise<Pedido> {
   if (USE_MOCK) {
     return simular((banco) => {
