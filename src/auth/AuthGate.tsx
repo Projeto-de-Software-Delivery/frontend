@@ -1,5 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useLayoutEffect } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { AppRoutes } from '../AppRoutes';
 import { LoginButton } from './LoginButton';
 import { TelaAviso, TelaLogin } from './TelaLogin';
@@ -33,8 +34,14 @@ export function AuthGate() {
     );
   }
 
+  // cada tipo de usuário tem o seu link de login (/entrar/cliente, /entrar/loja, /entrar/entregador)
   if (!isAuthenticated) {
-    return <TelaLogin />;
+    return (
+      <Routes>
+        <Route path="/entrar/:tipo" element={<TelaLogin />} />
+        <Route path="*" element={<TelaLogin />} />
+      </Routes>
+    );
   }
 
   return <AppRoutes />;
