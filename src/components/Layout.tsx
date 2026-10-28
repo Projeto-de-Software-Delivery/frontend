@@ -1,4 +1,5 @@
 import { Bike } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { USE_MOCK } from '../api/http';
 import { LogoutButton } from '../auth/LogoutButton';
@@ -6,10 +7,12 @@ import { LogoutButton } from '../auth/LogoutButton';
 interface Props {
   titulo: string;
   links: { para: string; texto: string }[];
+  /** Fica no canto direito do topo (ex.: o carrinho do cliente). */
+  direita?: ReactNode;
 }
 
 /** Cabeçalho com o menu de cada área (cliente, loja, entregador). */
-export function Layout({ titulo, links }: Props) {
+export function Layout({ titulo, links, direita }: Props) {
   return (
     <>
       <header className="topo">
@@ -28,6 +31,7 @@ export function Layout({ titulo, links }: Props) {
           </nav>
           {USE_MOCK && <span className="tag-mock" title="Dados falsos, salvos no navegador">Modo demo</span>}
           {!USE_MOCK && <LogoutButton />}
+          {direita}
         </div>
       </header>
       <main className="pagina">
