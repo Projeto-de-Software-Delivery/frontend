@@ -1,10 +1,22 @@
-import { useState, type FormEvent } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { criarCliente } from '../api/clientes';
 import { criarEntregador } from '../api/entregadores';
+import { USE_MOCK } from '../api/http';
 import { criarLoja } from '../api/lojas';
 import type { Veiculo } from '../types';
 import { useAcao } from '../util';
+
+function PreencherAuth0({ onDados }: { onDados: (dados: { nome?: string; email?: string }) => void }) {
+  const { user } = useAuth0();
+  useEffect(() => {
+    if (user) {
+      onDados({ nome: user.name, email: user.email });
+    }
+  }, [user, onDados]);
+  return null;
+}
 
 // POST /clientes
 export function CadastroCliente() {
@@ -27,6 +39,17 @@ export function CadastroCliente() {
 
   return (
     <main className="cadastro">
+      {!USE_MOCK && (
+        <PreencherAuth0
+          onDados={({ nome, email }) => {
+            setForm((prev) => ({
+              ...prev,
+              nome: prev.nome || nome || '',
+              email: prev.email || email || '',
+            }));
+          }}
+        />
+      )}
       <Link to="/" className="voltar">← Voltar</Link>
       <form className="card formulario" onSubmit={enviar}>
         <h1>Novo cliente</h1>
@@ -94,6 +117,13 @@ export function CadastroEntregador() {
 
   return (
     <main className="cadastro">
+      {!USE_MOCK && (
+        <PreencherAuth0
+          onDados={({ nome: nomeAuth }) => {
+            if (nomeAuth) setNome((prev) => prev || nomeAuth);
+          }}
+        />
+      )}
       <Link to="/" className="voltar">← Voltar</Link>
       <form className="card formulario" onSubmit={enviar}>
         <h1>Novo entregador</h1>

@@ -3,12 +3,18 @@
 
 import type { Entregador, EntregadorRequest, StatusEntregador } from '../types';
 import { http, USE_MOCK } from './http';
-import { acharOu404, simular } from './mock';
+import { acharOu404, erro, simular } from './mock';
 
 // GET /entregadores
 export function listarEntregadores(): Promise<Entregador[]> {
   if (USE_MOCK) return simular((banco) => banco.entregadores);
   return http('GET', '/entregadores');
+}
+
+// GET /entregadores/me
+export function buscarMeuEntregador(): Promise<Entregador> {
+  if (USE_MOCK) return simular((banco) => banco.entregadores[0] ?? erro(404, 'Entregador não encontrado'));
+  return http('GET', '/entregadores/me');
 }
 
 // GET /entregadores/{id}

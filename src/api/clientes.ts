@@ -12,6 +12,12 @@ export function listarClientes(): Promise<Cliente[]> {
   return http('GET', '/clientes');
 }
 
+// GET /clientes/me
+export function buscarMeuCliente(): Promise<Cliente> {
+  if (USE_MOCK) return simular((banco) => banco.clientes[0] ?? erro(404, 'Cliente não encontrado'));
+  return http('GET', '/clientes/me');
+}
+
 // GET /clientes/{id}
 export function buscarCliente(id: number): Promise<Cliente> {
   if (USE_MOCK) return simular((banco) => acharOu404(banco.clientes, id, 'Cliente'));
