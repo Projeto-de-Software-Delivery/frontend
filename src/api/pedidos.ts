@@ -14,7 +14,8 @@ export function criarPedido(clienteId: number, dados: CriarPedidoRequest): Promi
   if (USE_MOCK) {
     return simular((banco) => {
       acharOu404(banco.clientes, clienteId, 'Cliente');
-      acharOu404(banco.lojas, dados.lojaId, 'Loja');
+      const loja = acharOu404(banco.lojas, dados.lojaId, 'Loja');
+      const agora = Date.now();
 
       const itens = dados.itens.map(({ produtoId, quantidade }) => {
         const produto = acharOu404(banco.produtos, produtoId, 'Produto');
@@ -31,12 +32,14 @@ export function criarPedido(clienteId: number, dados: CriarPedidoRequest): Promi
         total: itens.reduce((soma, item) => soma + item.subtotal, 0),
         enderecoEntrega: dados.enderecoEntrega,
         status: 'AGUARDANDO_VALIDACAO',
-        dataCriacao: new Date().toISOString(),
+        dataCriacao: new Date(agora).toISOString(),
         pin: codigo4Digitos(),
         entregadorId: null,
         codigoRetirada: codigo4Digitos(),
         entregaConfirmadaPeloEntregador: false,
         recebimentoConfirmadoPeloCliente: false,
+        prazoAceite: new Date(agora + loja.tempoMaxAceiteMin * 60_000).toISOString(),
+        prazoEntrega: null,
       };
       banco.pedidos.push(pedido);
       return pedido;
@@ -80,6 +83,7 @@ export function aceitarPedido(lojaId: number, pedidoId: number, dados: AceitarPe
       const pedido = acharOu404(banco.pedidos, pedidoId, 'Pedido');
       if (pedido.lojaId !== lojaId) erro(404, 'Pedido não encontrado para esta loja');
       if (pedido.status !== 'AGUARDANDO_VALIDACAO') erro(409, `Pedido está em ${pedido.status}`);
+      const loja = acharOu404(banco.lojas, lojaId, 'Loja');
 
       for (const item of pedido.itens) {
         const produto = acharOu404(banco.produtos, item.produtoId, 'Produto');
@@ -89,6 +93,7 @@ export function aceitarPedido(lojaId: number, pedidoId: number, dados: AceitarPe
         acharOu404(banco.produtos, item.produtoId, 'Produto').estoque -= item.quantidade;
       }
       pedido.status = 'VALIDADO';
+      pedido.prazoEntrega = new Date(Date.now() + loja.tempoMaxEntregaMin * 60_000).toISOString();
 
       const entregador = banco.entregadores.find((e) => e.status === 'DISPONIVEL');
       if (entregador) {

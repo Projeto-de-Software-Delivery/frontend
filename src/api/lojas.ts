@@ -17,12 +17,17 @@ export function buscarLoja(id: number): Promise<Loja> {
   return http('GET', `/lojas/${id}`);
 }
 
+/** Igual ao backend: prazo não informado usa o padrão. */
+function comPrazosPadrao(dados: LojaRequest) {
+  return { ...dados, tempoMaxAceiteMin: dados.tempoMaxAceiteMin ?? 10, tempoMaxEntregaMin: dados.tempoMaxEntregaMin ?? 60 };
+}
+
 // POST /lojas
 export function criarLoja(dados: LojaRequest): Promise<Loja> {
   if (USE_MOCK) {
     return simular((banco) => {
       if (!/^\d{14}$/.test(dados.cnpj)) erro(400, 'CNPJ deve ter 14 dígitos');
-      const loja = { id: novoId(banco), ...dados };
+      const loja = { id: novoId(banco), ...comPrazosPadrao(dados) };
       banco.lojas.push(loja);
       return loja;
     });
@@ -33,7 +38,7 @@ export function criarLoja(dados: LojaRequest): Promise<Loja> {
 // PUT /lojas/{id}
 export function atualizarLoja(id: number, dados: LojaRequest): Promise<Loja> {
   if (USE_MOCK) {
-    return simular((banco) => Object.assign(acharOu404(banco.lojas, id, 'Loja'), dados));
+    return simular((banco) => Object.assign(acharOu404(banco.lojas, id, 'Loja'), comPrazosPadrao(dados)));
   }
   return http('PUT', `/lojas/${id}`, dados);
 }

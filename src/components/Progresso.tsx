@@ -11,7 +11,7 @@ const ETAPAS: { status: PedidoStatus; texto: string }[] = [
 
 /** Barrinha com as 5 etapas do pedido, pintando até a etapa atual. */
 export function Progresso({ status }: { status: PedidoStatus }) {
-  if (status === 'CANCELADO') return <p className="cancelado">Pedido cancelado pela loja</p>;
+  if (status === 'CANCELADO') return <p className="cancelado">Pedido cancelado: a loja recusou ou não aceitou a tempo</p>;
 
   const atual = ETAPAS.findIndex((etapa) => etapa.status === status);
   return (

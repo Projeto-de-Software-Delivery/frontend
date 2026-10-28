@@ -5,6 +5,7 @@ import { buscarEntregador, mudarStatusEntregador } from '../../api/entregadores'
 import { listarLojas } from '../../api/lojas';
 import { confirmarEntrega, confirmarRetirada, listarPedidosDoEntregador } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
+import { Prazo } from '../../components/Prazo';
 import { Progresso } from '../../components/Progresso';
 import type { Pedido } from '../../types';
 import {
@@ -209,6 +210,7 @@ function CardCorrida({
       </div>
 
       <Progresso status={pedido.status} />
+      <Prazo pedido={pedido} />
 
       <div className="rota">
         <div className={pedido.status === 'ENTREGA_ACEITA' ? 'parada atual' : 'parada'}>

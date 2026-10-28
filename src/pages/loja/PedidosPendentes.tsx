@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { buscarLoja } from '../../api/lojas';
+import { atualizarLoja, buscarLoja } from '../../api/lojas';
 import { aceitarPedido, listarPedidosDaLoja, recusarPedido } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
-import type { Pedido } from '../../types';
+import { Prazo } from '../../components/Prazo';
+import type { Loja, Pedido } from '../../types';
 import {
   dataHora, dinheiro, LAT_LNG_PADRAO, NOME_STATUS_PEDIDO, nomePorId, useAcao, useAtualizarACada, useCarregar,
 } from '../../util';
@@ -55,6 +56,7 @@ export function PedidosPendentes() {
         <h1>Pedidos pendentes</h1>
         <button className="botao-claro" onClick={pedidos.recarregar}>Atualizar</button>
       </div>
+      {loja.dados && <PrazosDaLoja loja={loja.dados} onSalvo={loja.setDados} />}
       {aviso && <p className="aviso">{aviso}</p>}
       {(erro || pedidos.erro) && <p className="erro">{erro || pedidos.erro}</p>}
       {pedidos.dados && pendentes.length === 0 && <p className="nota">Nenhum pedido esperando por você. 🎉</p>}
@@ -76,6 +78,7 @@ export function PedidosPendentes() {
             <div key={pedido.id} className="card bloco">
               <div className="linha">
                 <h2>Pedido #{pedido.id}</h2>
+                <Prazo pedido={pedido} />
                 <span className={`status status-${pedido.status}`}>{NOME_STATUS_PEDIDO[pedido.status]}</span>
               </div>
               <ul className="lista-itens">
@@ -99,6 +102,44 @@ export function PedidosPendentes() {
   );
 }
 
+/** Prazos que a loja define: para aceitar (senão cancela) e para entregar (senão aparece atrasado). */
+function PrazosDaLoja({ loja, onSalvo }: { loja: Loja; onSalvo: (loja: Loja) => void }) {
+  const [aceite, setAceite] = useState(String(loja.tempoMaxAceiteMin));
+  const [entrega, setEntrega] = useState(String(loja.tempoMaxEntregaMin));
+  const { erro, executar } = useAcao();
+  const [salvo, setSalvo] = useState(false);
+  const mudou = Number(aceite) !== loja.tempoMaxAceiteMin || Number(entrega) !== loja.tempoMaxEntregaMin;
+
+  function salvar(e: FormEvent) {
+    e.preventDefault();
+    setSalvo(false);
+    executar(async () => {
+      const { id, ...dados } = loja;
+      onSalvo(await atualizarLoja(id, { ...dados, tempoMaxAceiteMin: Number(aceite), tempoMaxEntregaMin: Number(entrega) }));
+      setSalvo(true);
+    });
+  }
+
+  return (
+    <form className="card form-linha prazos-loja" onSubmit={salvar}>
+      <div className="cresce">
+        <h2>Seus prazos</h2>
+        <p className="nota">Pedido não aceito no prazo é cancelado. Entrega fora do prazo aparece como atrasada.</p>
+      </div>
+      <label className="campo-pequeno">
+        Aceitar (min)
+        <input required type="number" min="1" value={aceite} onChange={(e) => { setAceite(e.target.value); setSalvo(false); }} />
+      </label>
+      <label className="campo-pequeno">
+        Entregar (min)
+        <input required type="number" min="1" value={entrega} onChange={(e) => { setEntrega(e.target.value); setSalvo(false); }} />
+      </label>
+      <button className="botao-claro" disabled={!mudou}>{salvo && !mudou ? 'Salvo ✓' : 'Salvar'}</button>
+      {erro && <p className="erro">{erro}</p>}
+    </form>
+  );
+}
+
 function CardPedido({
   pedido, nomeDoProduto, onAceitar, onRecusar,
 }: {
@@ -116,6 +157,7 @@ function CardPedido({
         <h2>Pedido #{pedido.id}</h2>
         <span className="nota">{dataHora(pedido.dataCriacao)}</span>
       </div>
+      <Prazo pedido={pedido} />
       <ul className="lista-itens">
         {pedido.itens.map((item) => (
           <li key={item.produtoId}>{item.quantidade}× {nomeDoProduto(item.produtoId)}</li>
