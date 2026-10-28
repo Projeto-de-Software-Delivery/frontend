@@ -1,7 +1,8 @@
-import { Plus } from 'lucide-react';
+import { LocateFixed, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { alterarQuantidade, buscarCarrinho, removerDoCarrinho } from '../../api/carrinho';
+import { buscarMinhaLocalizacao } from '../../api/localizacao';
 import { listarLojas } from '../../api/lojas';
 import { criarPedido } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
@@ -17,6 +18,20 @@ export function Carrinho() {
   const lojas = useCarregar(() => listarLojas(), []);
   const { erro, executar } = useAcao();
   const [rua, setRua] = useState('');
+  // coordenadas reais quando o cliente usa a localização; senão vai o ponto padrão
+  const [coordenadas, setCoordenadas] = useState(LAT_LNG_PADRAO);
+  const [localizando, setLocalizando] = useState(false);
+
+  async function usarMinhaLocalizacao() {
+    setLocalizando(true);
+    await executar(async () => {
+      const local = await buscarMinhaLocalizacao();
+      setCoordenadas({ lat: local.lat, lng: local.lng });
+      if (local.rua) setRua(local.rua);
+      else throw new Error('Achamos sua posição, mas não o nome da rua. Digite o endereço, por favor.');
+    });
+    setLocalizando(false);
+  }
 
   const produto = (id: number) => produtos.dados?.find((p) => p.id === id);
 
@@ -45,7 +60,7 @@ export function Carrinho() {
       await criarPedido(clienteId, {
         lojaId,
         itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade })),
-        enderecoEntrega: { rua, ...LAT_LNG_PADRAO },
+        enderecoEntrega: { rua, ...coordenadas },
       });
       // o backend não limpa o carrinho sozinho, então tiramos os itens que viraram pedido
       await Promise.all(itens.map((item) => removerDoCarrinho(clienteId, item.id)));
@@ -65,10 +80,15 @@ export function Carrinho() {
       )}
 
       {itensPorLoja.size > 0 && (
-        <label className="card campo-endereco">
-          Endereço de entrega
-          <input value={rua} onChange={(e) => setRua(e.target.value)} placeholder="Rua, número, bairro" />
-        </label>
+        <div className="card campo-endereco">
+          <label htmlFor="rua">Endereço de entrega</label>
+          <div className="linha-endereco">
+            <input id="rua" value={rua} onChange={(e) => setRua(e.target.value)} placeholder="Rua, número, bairro" />
+            <button className="botao-claro" onClick={usarMinhaLocalizacao} disabled={localizando}>
+              <LocateFixed size={15} /> {localizando ? 'Localizando…' : 'Usar minha localização'}
+            </button>
+          </div>
+        </div>
       )}
 
       {[...itensPorLoja].map(([lojaId, itens]) => {

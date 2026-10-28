@@ -169,7 +169,10 @@ a.botao-claro { text-decoration: none; }
 .item-lista { display: flex; align-items: center; gap: 0.9rem; padding: 0.7rem 0; border-bottom: 1px solid var(--borda); }
 .item-lista:last-child { border-bottom: none; }
 .total { border-top: 1px solid var(--borda); padding-top: 0.9rem; }
-.campo-endereco { margin-bottom: 1rem; }
+.campo-endereco { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.linha-endereco { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.linha-endereco input { flex: 1 1 240px; width: auto; }
+.botao-claro:disabled { color: var(--cinza-claro); cursor: wait; }
 .pin { font-size: 0.8rem; color: var(--cinza); border: 1px solid var(--borda); padding: 0.3rem 0.7rem; border-radius: 8px; }
 .pin strong { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: 0.2em; color: var(--texto); font-size: 0.95rem; margin-left: 0.35rem; }
 
