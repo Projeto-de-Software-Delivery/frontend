@@ -27,8 +27,14 @@ export interface Loja {
   nome: string;
   cnpj: string;
   endereco: string;
+  /** Minutos para aceitar um pedido novo; passou disso, o pedido é cancelado. */
+  tempoMaxAceiteMin: number;
+  /** Minutos, contados da aceitação, para o pedido chegar; passou disso, aparece como atrasado. */
+  tempoMaxEntregaMin: number;
 }
-export type LojaRequest = Omit<Loja, 'id'>;
+// os prazos são opcionais no cadastro (o backend usa 10 e 60 minutos)
+export type LojaRequest = Omit<Loja, 'id' | 'tempoMaxAceiteMin' | 'tempoMaxEntregaMin'>
+  & Partial<Pick<Loja, 'tempoMaxAceiteMin' | 'tempoMaxEntregaMin'>>;
 
 export interface Produto {
   id: number;
@@ -92,6 +98,10 @@ export interface Pedido {
   /** A entrega só termina com as duas confirmações: entregador (PIN) e cliente ("Recebi"). */
   entregaConfirmadaPeloEntregador: boolean;
   recebimentoConfirmadoPeloCliente: boolean;
+  /** Até quando a loja pode aceitar (null em pedidos antigos). */
+  prazoAceite: string | null;
+  /** Até quando o pedido deve chegar; definido na aceitação. */
+  prazoEntrega: string | null;
 }
 
 export interface CriarPedidoRequest {

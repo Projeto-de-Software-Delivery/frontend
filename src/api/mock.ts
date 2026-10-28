@@ -39,11 +39,11 @@ const DADOS_INICIAIS: Banco = {
   enderecos: [],
 
   lojas: [
-    { id: 1, nome: 'Burger da Vila', cnpj: '12345678000190', endereco: 'R. Quatá, 300 - Vila Olímpia' },
-    { id: 2, nome: 'Sushi Itaim', cnpj: '98765432000110', endereco: 'R. Joaquim Floriano, 820 - Itaim Bibi' },
-    { id: 3, nome: 'Padaria Faria Lima', cnpj: '11222333000144', endereco: 'Av. Faria Lima, 4000 - Itaim Bibi' },
-    { id: 4, nome: 'Pizzaria Bella Napoli', cnpj: '55666777000188', endereco: 'R. Funchal, 120 - Vila Olímpia' },
-    { id: 5, nome: 'Açaí da Praia', cnpj: '44555666000122', endereco: 'R. Gomes de Carvalho, 950 - Vila Olímpia' },
+    { id: 1, nome: 'Burger da Vila', cnpj: '12345678000190', endereco: 'R. Quatá, 300 - Vila Olímpia', tempoMaxAceiteMin: 15, tempoMaxEntregaMin: 45 },
+    { id: 2, nome: 'Sushi Itaim', cnpj: '98765432000110', endereco: 'R. Joaquim Floriano, 820 - Itaim Bibi', tempoMaxAceiteMin: 10, tempoMaxEntregaMin: 60 },
+    { id: 3, nome: 'Padaria Faria Lima', cnpj: '11222333000144', endereco: 'Av. Faria Lima, 4000 - Itaim Bibi', tempoMaxAceiteMin: 5, tempoMaxEntregaMin: 30 },
+    { id: 4, nome: 'Pizzaria Bella Napoli', cnpj: '55666777000188', endereco: 'R. Funchal, 120 - Vila Olímpia', tempoMaxAceiteMin: 10, tempoMaxEntregaMin: 50 },
+    { id: 5, nome: 'Açaí da Praia', cnpj: '44555666000122', endereco: 'R. Gomes de Carvalho, 950 - Vila Olímpia', tempoMaxAceiteMin: 10, tempoMaxEntregaMin: 40 },
   ],
 
   produtos: [
@@ -78,6 +78,7 @@ const DADOS_INICIAIS: Banco = {
     {
       id: 50, clienteId: 1, lojaId: 3, status: 'ENTREGUE', pin: '4821', entregadorId: 'a1b2c3d4-0000-4000-8000-000000000001',
       codigoRetirada: '7310', entregaConfirmadaPeloEntregador: true, recebimentoConfirmadoPeloCliente: true,
+      prazoAceite: minutosAtras(60 * 26 - 5), prazoEntrega: minutosAtras(60 * 26 - 35),
       itens: [
         { produtoId: 9, quantidade: 2, precoUnitario: 9.5, subtotal: 19 },
         { produtoId: 11, quantidade: 2, precoUnitario: 8, subtotal: 16 },
@@ -87,6 +88,7 @@ const DADOS_INICIAIS: Banco = {
     {
       id: 51, clienteId: 1, lojaId: 1, status: 'AGUARDANDO_VALIDACAO', pin: '1307', entregadorId: null,
       codigoRetirada: '2648', entregaConfirmadaPeloEntregador: false, recebimentoConfirmadoPeloCliente: false,
+      prazoAceite: minutosAtras(4 - 15), prazoEntrega: null,
       itens: [
         { produtoId: 1, quantidade: 1, precoUnitario: 32.9, subtotal: 32.9 },
         { produtoId: 3, quantidade: 1, precoUnitario: 18, subtotal: 18 },
@@ -96,12 +98,14 @@ const DADOS_INICIAIS: Banco = {
     {
       id: 52, clienteId: 2, lojaId: 1, status: 'AGUARDANDO_VALIDACAO', pin: '9954', entregadorId: null,
       codigoRetirada: '5091', entregaConfirmadaPeloEntregador: false, recebimentoConfirmadoPeloCliente: false,
+      prazoAceite: minutosAtras(1 - 15), prazoEntrega: null,
       itens: [{ produtoId: 2, quantidade: 2, precoUnitario: 38.5, subtotal: 77 }],
       total: 77, enderecoEntrega: { rua: 'Av. Santo Amaro, 1500 - Itaim Bibi', ...insper }, dataCriacao: minutosAtras(1),
     },
     {
       id: 53, clienteId: 3, lojaId: 4, status: 'ENTREGA_ACEITA', pin: '5562', entregadorId: 'a1b2c3d4-0000-4000-8000-000000000003',
       codigoRetirada: '8423', entregaConfirmadaPeloEntregador: false, recebimentoConfirmadoPeloCliente: false,
+      prazoAceite: minutosAtras(18 - 10), prazoEntrega: minutosAtras(18 - 10 - 50),
       itens: [
         { produtoId: 13, quantidade: 1, precoUnitario: 59, subtotal: 59 },
         { produtoId: 15, quantidade: 2, precoUnitario: 7, subtotal: 14 },
@@ -118,7 +122,7 @@ const DADOS_INICIAIS: Banco = {
 };
 
 // Mudou os dados iniciais? Troque a versão da chave para o navegador carregar os novos.
-const CHAVE = 'delivery-mock-v4';
+const CHAVE = 'delivery-mock-v5';
 
 function lerBanco(): Banco {
   try {
@@ -154,9 +158,19 @@ export function resetarMock() {
 export async function simular<T>(fn: (banco: Banco) => T): Promise<T> {
   await new Promise((r) => setTimeout(r, 200));
   const banco = lerBanco();
+  cancelarVencidos(banco);
   const resultado = fn(banco);
   salvarBanco(banco);
   return structuredClone(resultado);
+}
+
+/** Faz o papel do PrazoAceiteJob do backend: a loja não aceitou a tempo, o pedido é cancelado. */
+function cancelarVencidos(banco: Banco) {
+  for (const pedido of banco.pedidos) {
+    if (pedido.status === 'AGUARDANDO_VALIDACAO' && pedido.prazoAceite && Date.now() > Date.parse(pedido.prazoAceite)) {
+      pedido.status = 'CANCELADO';
+    }
+  }
 }
 
 export function novoId(banco: Banco) {

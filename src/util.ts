@@ -7,6 +7,12 @@ export const dinheiro = (valor: number) =>
 export const dataHora = (iso: string) =>
   new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
+export const hora = (iso: string) =>
+  new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+/** Minutos que faltam até `iso` (negativo se já passou). */
+export const minutosAte = (iso: string) => Math.ceil((Date.parse(iso) - Date.now()) / 60_000);
+
 export const NOME_STATUS_PEDIDO: Record<PedidoStatus, string> = {
   AGUARDANDO_VALIDACAO: 'Aguardando a loja',
   VALIDADO: 'Em preparo',

@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { listarLojas } from '../../api/lojas';
 import { confirmarRecebimento, listarPedidosDoCliente } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
+import { Prazo } from '../../components/Prazo';
 import { Progresso } from '../../components/Progresso';
 import type { Pedido } from '../../types';
 import {
@@ -59,6 +60,7 @@ export function Pedidos() {
             </div>
 
             <Progresso status={pedido.status} />
+            <Prazo pedido={pedido} />
 
             <p>
               {pedido.itens

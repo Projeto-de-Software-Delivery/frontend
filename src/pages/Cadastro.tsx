@@ -43,7 +43,7 @@ export function CadastroCliente() {
 // POST /lojas
 export function CadastroLoja() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nome: '', cnpj: '', endereco: '' });
+  const [form, setForm] = useState({ nome: '', cnpj: '', endereco: '', tempoMaxAceiteMin: '10', tempoMaxEntregaMin: '60' });
   const { erro, executar } = useAcao();
 
   const campo = (nome: keyof typeof form) => ({
@@ -57,7 +57,13 @@ export function CadastroLoja() {
       // o backend só aceita os 14 números, sem pontos e barras, e responde 400 sem mensagem
       const cnpj = form.cnpj.replace(/\D/g, '');
       if (cnpj.length !== 14) throw new Error(`O CNPJ precisa ter 14 números (você digitou ${cnpj.length})`);
-      const loja = await criarLoja({ nome: form.nome.trim(), cnpj, endereco: form.endereco.trim() });
+      const loja = await criarLoja({
+        nome: form.nome.trim(),
+        cnpj,
+        endereco: form.endereco.trim(),
+        tempoMaxAceiteMin: Number(form.tempoMaxAceiteMin),
+        tempoMaxEntregaMin: Number(form.tempoMaxEntregaMin),
+      });
       navigate(`/loja/${loja.id}`);
     });
   }
@@ -70,6 +76,17 @@ export function CadastroLoja() {
         <label>Nome<input required pattern=".*\S.*" {...campo('nome')} /></label>
         <label>CNPJ<input required inputMode="numeric" placeholder="00.000.000/0000-00" {...campo('cnpj')} /></label>
         <label>Endereço<input required pattern=".*\S.*" {...campo('endereco')} /></label>
+        <div className="form-linha">
+          <label>
+            Prazo para aceitar (min)
+            <input required type="number" min="1" {...campo('tempoMaxAceiteMin')} />
+          </label>
+          <label>
+            Prazo para entregar (min)
+            <input required type="number" min="1" {...campo('tempoMaxEntregaMin')} />
+          </label>
+        </div>
+        <p className="nota">Pedido não aceito no prazo é cancelado; entrega fora do prazo aparece como atrasada.</p>
         {erro && <p className="erro">{erro}</p>}
         <button className="botao">Cadastrar</button>
       </form>

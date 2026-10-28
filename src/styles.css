@@ -182,6 +182,10 @@ label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; 
   border-radius: 99px; border: 1px solid var(--borda); background: #fff; color: var(--texto);
   width: auto; white-space: nowrap;
 }
+.etiqueta-atraso { display: inline-flex; align-items: center; font-size: 0.78rem; font-weight: 600; color: #b42318; background: #fef3f2; border: 1px solid #fecdca; padding: 0.2rem 0.65rem; border-radius: 99px; white-space: nowrap; }
+.prazo-curto { color: #b42318; font-weight: 500; }
+.prazos-loja { align-items: center; }
+.prazos-loja .erro { flex-basis: 100%; }
 span.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .status-AGUARDANDO_VALIDACAO { color: #b54708; background: #fffaeb; border-color: #fedf89; }
 .status-VALIDADO { color: #175cd3; background: #eff8ff; border-color: #b2ddff; }
