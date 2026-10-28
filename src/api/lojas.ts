@@ -11,6 +11,12 @@ export function listarLojas(): Promise<Loja[]> {
   return http('GET', '/lojas');
 }
 
+// GET /lojas/me
+export function buscarMinhaLoja(): Promise<Loja> {
+  if (USE_MOCK) return simular((banco) => banco.lojas[0] ?? erro(404, 'Loja não encontrada'));
+  return http('GET', '/lojas/me');
+}
+
 // GET /lojas/{id}
 export function buscarLoja(id: number): Promise<Loja> {
   if (USE_MOCK) return simular((banco) => acharOu404(banco.lojas, id, 'Loja'));
