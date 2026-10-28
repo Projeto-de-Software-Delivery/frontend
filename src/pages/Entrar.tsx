@@ -114,7 +114,8 @@ function ResolucaoUsuario({ tipo }: { tipo: TipoUsuario }) {
       .catch((err) => {
         if (!ativo) return;
         // 404 = usuário autenticado no Auth0, mas ainda não completou o cadastro deste tipo
-        if (err instanceof ApiError && err.status === 404) {
+        // 400/422 = backend ainda não possui a rota /me e tratou "me" como id numérico/UUID inválido
+        if (err instanceof ApiError && (err.status === 404 || err.status === 400 || err.status === 422)) {
           navigate(`/cadastro/${tipo}`, { replace: true });
           return;
         }
