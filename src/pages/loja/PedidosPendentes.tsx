@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { buscarLoja } from '../../api/lojas';
-import { aceitarPedido, listarPedidosPendentes, recusarPedido } from '../../api/pedidos';
+import { aceitarPedido, listarPedidosDaLoja, recusarPedido } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
 import type { Pedido } from '../../types';
-import { dataHora, dinheiro, LAT_LNG_PADRAO, NOME_STATUS_PEDIDO, nomePorId, useAcao, useCarregar } from '../../util';
+import {
+  dataHora, dinheiro, LAT_LNG_PADRAO, NOME_STATUS_PEDIDO, nomePorId, useAcao, useAtualizarACada, useCarregar,
+} from '../../util';
 
-/** Painel da loja: pedidos aguardando validação. */
+// aceitos, mas o entregador ainda não pegou: a loja precisa mostrar o código de retirada
+const aguardandoRetirada = (pedido: Pedido) => pedido.status === 'VALIDADO' || pedido.status === 'ENTREGA_ACEITA';
+
+/** Painel da loja: pedidos aguardando validação e pedidos esperando o entregador. */
 export function PedidosPendentes() {
   const lojaId = Number(useParams().lojaId);
   const loja = useCarregar(() => buscarLoja(lojaId), [lojaId]);
-  const pedidos = useCarregar(() => listarPedidosPendentes(lojaId), [lojaId]);
+  const pedidos = useCarregar(() => listarPedidosDaLoja(lojaId), [lojaId]);
   const produtos = useCarregar(() => listarProdutos(lojaId), [lojaId]);
   const { erro, executar } = useAcao();
   const [aviso, setAviso] = useState('');
+
+  // pedido novo e entregador chegando aparecem sozinhos
+  useAtualizarACada(pedidos.recarregar, 10_000, true);
+
+  const pendentes = (pedidos.dados ?? []).filter((p) => p.status === 'AGUARDANDO_VALIDACAO');
+  const paraRetirar = (pedidos.dados ?? []).filter(aguardandoRetirada);
+  const nomeDoProduto = (id: number) => nomePorId(produtos.dados, id, 'Produto');
 
   function aceitar(pedido: Pedido, valorFrete: number, tempoPreparoMin: number) {
     setAviso('');
@@ -45,17 +57,44 @@ export function PedidosPendentes() {
       </div>
       {aviso && <p className="aviso">{aviso}</p>}
       {(erro || pedidos.erro) && <p className="erro">{erro || pedidos.erro}</p>}
-      {pedidos.dados?.length === 0 && <p className="nota">Nenhum pedido esperando por você. 🎉</p>}
+      {pedidos.dados && pendentes.length === 0 && <p className="nota">Nenhum pedido esperando por você. 🎉</p>}
 
-      {pedidos.dados?.map((pedido) => (
+      {pendentes.map((pedido) => (
         <CardPedido
           key={pedido.id}
           pedido={pedido}
-          nomeDoProduto={(id) => nomePorId(produtos.dados, id, 'Produto')}
+          nomeDoProduto={nomeDoProduto}
           onAceitar={aceitar}
           onRecusar={recusar}
         />
       ))}
+
+      {paraRetirar.length > 0 && (
+        <>
+          <h2 className="titulo-secao">Aguardando retirada</h2>
+          {paraRetirar.map((pedido) => (
+            <div key={pedido.id} className="card bloco">
+              <div className="linha">
+                <h2>Pedido #{pedido.id}</h2>
+                <span className={`status status-${pedido.status}`}>{NOME_STATUS_PEDIDO[pedido.status]}</span>
+              </div>
+              <ul className="lista-itens">
+                {pedido.itens.map((item) => (
+                  <li key={item.produtoId}>{item.quantidade}× {nomeDoProduto(item.produtoId)}</li>
+                ))}
+              </ul>
+              <div className="linha acoes">
+                <span className="nota cresce">
+                  {pedido.status === 'ENTREGA_ACEITA'
+                    ? 'Entregador a caminho. Só entregue o pedido depois de passar este código para ele:'
+                    : 'Ainda sem entregador. Quando ele chegar, passe este código:'}
+                </span>
+                <span className="pin">Código de retirada <strong>{pedido.codigoRetirada}</strong></span>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </>
   );
 }

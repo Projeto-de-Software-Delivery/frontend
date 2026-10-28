@@ -5,7 +5,9 @@
 
 import type { AceitarPedidoRequest, CriarPedidoRequest, Pedido, PedidoStatus } from '../types';
 import { http, USE_MOCK } from './http';
-import { acharOu404, erro, novoId, simular } from './mock';
+import { acharOu404, erro, novoId, simular, type Banco } from './mock';
+
+const codigo4Digitos = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
 // POST /clientes/{clienteId}/pedidos
 export function criarPedido(clienteId: number, dados: CriarPedidoRequest): Promise<Pedido> {
@@ -30,8 +32,11 @@ export function criarPedido(clienteId: number, dados: CriarPedidoRequest): Promi
         enderecoEntrega: dados.enderecoEntrega,
         status: 'AGUARDANDO_VALIDACAO',
         dataCriacao: new Date().toISOString(),
-        pin: String(Math.floor(1000 + Math.random() * 9000)),
+        pin: codigo4Digitos(),
         entregadorId: null,
+        codigoRetirada: codigo4Digitos(),
+        entregaConfirmadaPeloEntregador: false,
+        recebimentoConfirmadoPeloCliente: false,
       };
       banco.pedidos.push(pedido);
       return pedido;
@@ -60,14 +65,10 @@ export function listarPedidosDoCliente(clienteId: number): Promise<Pedido[]> {
   return http('GET', `/clientes/${clienteId}/pedidos`);
 }
 
-// GET /lojas/{lojaId}/pedidos/pendentes
-export function listarPedidosPendentes(lojaId: number): Promise<Pedido[]> {
-  if (USE_MOCK) {
-    return simular((banco) =>
-      banco.pedidos.filter((p) => p.lojaId === lojaId && p.status === 'AGUARDANDO_VALIDACAO'),
-    );
-  }
-  return http('GET', `/lojas/${lojaId}/pedidos/pendentes`);
+// GET /lojas/{lojaId}/pedidos  (todos, em qualquer status)
+export function listarPedidosDaLoja(lojaId: number): Promise<Pedido[]> {
+  if (USE_MOCK) return simular((banco) => banco.pedidos.filter((p) => p.lojaId === lojaId));
+  return http('GET', `/lojas/${lojaId}/pedidos`);
 }
 
 // POST /lojas/{lojaId}/pedidos/{pedidoId}/aceitar
@@ -116,29 +117,39 @@ export function recusarPedido(lojaId: number, pedidoId: number): Promise<Pedido>
   return http('POST', `/lojas/${lojaId}/pedidos/${pedidoId}/recusar`);
 }
 
-// ===== App do entregador =====
+// ===== Retirada e entrega (cada passo verificado pelos dois lados) =====
 
 // GET /pedidos?entregadorId={id}
 export function listarPedidosDoEntregador(entregadorId: string): Promise<Pedido[]> {
   if (USE_MOCK) return simular((banco) => banco.pedidos.filter((p) => p.entregadorId === entregadorId));
-  return http('GET', `/pedidos?entregadorId=${encodeURIComponent(entregadorId)}`);
+  return http('GET', `/pedidos?entregadorId=${entregadorId}`);
 }
 
-// POST /pedidos/{id}/retirar → EM_ENTREGA, publica pedido.retirado
-export function confirmarRetirada(pedidoId: number, entregadorId: string): Promise<Pedido> {
+// POST /pedidos/{id}/retirar → EM_ENTREGA se o código de retirada (mostrado pela loja) bater
+export function confirmarRetirada(pedidoId: number, entregadorId: string, codigoRetirada: string): Promise<Pedido> {
   if (USE_MOCK) {
     return simular((banco) => {
       const pedido = acharOu404(banco.pedidos, pedidoId, 'Pedido');
       if (pedido.entregadorId !== entregadorId) erro(403, 'Este pedido não é seu');
       if (pedido.status !== 'ENTREGA_ACEITA') erro(409, `Pedido está em ${pedido.status}`);
+      if (pedido.codigoRetirada !== codigoRetirada) erro(422, 'Código de retirada incorreto');
       pedido.status = 'EM_ENTREGA';
       return pedido;
     });
   }
-  return http('POST', `/pedidos/${pedidoId}/retirar`, { entregadorId });
+  return http('POST', `/pedidos/${pedidoId}/retirar`, { entregadorId, codigoRetirada });
 }
 
-// POST /pedidos/{id}/entregar → ENTREGUE se o PIN bater (senão 422), publica pedido.entregue
+/** Igual ao backend: com as duas confirmações vira ENTREGUE e o entregador fica livre. */
+function finalizarSeAmbosConfirmaram(banco: Banco, pedido: Pedido) {
+  if (pedido.entregaConfirmadaPeloEntregador && pedido.recebimentoConfirmadoPeloCliente) {
+    pedido.status = 'ENTREGUE';
+    acharOu404(banco.entregadores, pedido.entregadorId ?? '', 'Entregador').status = 'DISPONIVEL';
+  }
+  return pedido;
+}
+
+// POST /pedidos/{id}/entregar → entregador confirma com o PIN do cliente
 export function confirmarEntrega(pedidoId: number, entregadorId: string, pin: string): Promise<Pedido> {
   if (USE_MOCK) {
     return simular((banco) => {
@@ -146,11 +157,23 @@ export function confirmarEntrega(pedidoId: number, entregadorId: string, pin: st
       if (pedido.entregadorId !== entregadorId) erro(403, 'Este pedido não é seu');
       if (pedido.status !== 'EM_ENTREGA') erro(409, `Pedido está em ${pedido.status}`);
       if (pedido.pin !== pin) erro(422, 'Código de entrega incorreto');
-      pedido.status = 'ENTREGUE';
-      // o entregador fica livre para a próxima corrida
-      acharOu404(banco.entregadores, entregadorId, 'Entregador').status = 'DISPONIVEL';
-      return pedido;
+      pedido.entregaConfirmadaPeloEntregador = true;
+      return finalizarSeAmbosConfirmaram(banco, pedido);
     });
   }
   return http('POST', `/pedidos/${pedidoId}/entregar`, { entregadorId, pin });
+}
+
+// POST /clientes/{clienteId}/pedidos/{id}/confirmar-recebimento → cliente confirma que recebeu
+export function confirmarRecebimento(clienteId: number, pedidoId: number): Promise<Pedido> {
+  if (USE_MOCK) {
+    return simular((banco) => {
+      const pedido = acharOu404(banco.pedidos, pedidoId, 'Pedido');
+      if (pedido.clienteId !== clienteId) erro(404, 'Pedido não encontrado para este cliente');
+      if (pedido.status !== 'EM_ENTREGA') erro(409, `Pedido está em ${pedido.status}`);
+      pedido.recebimentoConfirmadoPeloCliente = true;
+      return finalizarSeAmbosConfirmaram(banco, pedido);
+    });
+  }
+  return http('POST', `/clientes/${clienteId}/pedidos/${pedidoId}/confirmar-recebimento`);
 }
