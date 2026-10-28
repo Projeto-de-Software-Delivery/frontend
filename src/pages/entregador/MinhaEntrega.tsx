@@ -11,7 +11,9 @@ import {
   dataHora, dinheiro, NOME_STATUS_ENTREGADOR, NOME_STATUS_PEDIDO, useAcao, useAtualizarACada, useCarregar,
 } from '../../util';
 
-/** App do entregador: disponibilidade, corrida atual (retirada → entrega com PIN) e histórico. */
+const ativa = (pedido: Pedido) => pedido.status === 'ENTREGA_ACEITA' || pedido.status === 'EM_ENTREGA';
+
+/** App do entregador: disponibilidade, corridas ativas (retirada → entrega) e corridas finalizadas. */
 export function MinhaEntrega() {
   const entregadorId = useParams().entregadorId ?? '';
   const entregador = useCarregar(() => buscarEntregador(entregadorId), [entregadorId]);
@@ -20,16 +22,18 @@ export function MinhaEntrega() {
   const produtos = useCarregar(() => listarProdutos(), []);
   const { erro, executar } = useAcao();
   const [aviso, setAviso] = useState('');
+  const [aba, setAba] = useState<'ativas' | 'finalizadas'>('ativas');
 
-  const atual = pedidos.dados?.find((p) => p.status === 'ENTREGA_ACEITA' || p.status === 'EM_ENTREGA');
-  const finalizadas = (pedidos.dados ?? []).filter((p) => p.status === 'ENTREGUE').sort((a, b) => b.id - a.id);
+  const maisRecentesPrimeiro = [...(pedidos.dados ?? [])].sort((a, b) => b.id - a.id);
+  const ativas = maisRecentesPrimeiro.filter(ativa);
+  const finalizadas = maisRecentesPrimeiro.filter((p) => !ativa(p));
 
   const recarregarTudo = useCallback(() => {
     entregador.recarregar();
     pedidos.recarregar();
   }, [entregador.recarregar, pedidos.recarregar]);
 
-  // disponível ou em corrida: busca de novo a cada 10s pra corrida nova (ou mudança de status) aparecer sozinha
+  // disponível ou em corrida: busca de novo a cada 10s pra corrida nova (ou confirmação do cliente) aparecer sozinha
   useAtualizarACada(recarregarTudo, 10_000, entregador.dados?.status !== 'INDISPONIVEL');
 
   // PATCH /entregadores/{id}/status — só alterna entre disponível e indisponível;
@@ -43,10 +47,10 @@ export function MinhaEntrega() {
     });
   }
 
-  function retirar(pedido: Pedido) {
+  function retirar(pedido: Pedido, codigo: string) {
     setAviso('');
-    executar(async () => {
-      await confirmarRetirada(pedido.id, entregadorId);
+    return executar(async () => {
+      await confirmarRetirada(pedido.id, entregadorId, codigo);
       setAviso(`Pedido #${pedido.id} retirado. Bom trajeto!`);
       recarregarTudo();
     });
@@ -55,13 +59,15 @@ export function MinhaEntrega() {
   function entregar(pedido: Pedido, pin: string) {
     setAviso('');
     return executar(async () => {
-      await confirmarEntrega(pedido.id, entregadorId, pin);
-      setAviso(`Pedido #${pedido.id} entregue! 🎉`);
+      const atualizado = await confirmarEntrega(pedido.id, entregadorId, pin);
+      setAviso(atualizado.status === 'ENTREGUE'
+        ? `Pedido #${pedido.id} entregue! 🎉`
+        : `Código certo! Agora o cliente precisa tocar em "Recebi" no app dele para finalizar o pedido #${pedido.id}.`);
       recarregarTudo();
     });
   }
 
-  const nomeDaLoja = (id: number) => lojas.dados?.find((l) => l.id === id);
+  const lojaDoPedido = (id: number) => lojas.dados?.find((l) => l.id === id);
   const nomeDoProduto = (id: number) => produtos.dados?.find((p) => p.id === id)?.nome ?? `Produto ${id}`;
 
   return (
@@ -102,30 +108,44 @@ export function MinhaEntrega() {
         </div>
       )}
 
-      <h2 className="titulo-secao">Corrida atual</h2>
-      {!pedidos.carregando && !atual && (
-        <p className="vazio">🛵<br />Nenhuma corrida no momento.<br />Fique disponível para receber pedidos.</p>
-      )}
-      {atual && (
-        <CardCorrida
-          pedido={atual}
-          loja={nomeDaLoja(atual.lojaId)}
-          nomeDoProduto={nomeDoProduto}
-          onRetirar={retirar}
-          onEntregar={entregar}
-        />
+      <div className="abas" role="tablist">
+        <button role="tab" aria-selected={aba === 'ativas'} className={aba === 'ativas' ? 'ativa' : ''} onClick={() => setAba('ativas')}>
+          Ativas <span className="contagem-aba">{ativas.length}</span>
+        </button>
+        <button role="tab" aria-selected={aba === 'finalizadas'} className={aba === 'finalizadas' ? 'ativa' : ''} onClick={() => setAba('finalizadas')}>
+          Finalizadas <span className="contagem-aba">{finalizadas.length}</span>
+        </button>
+      </div>
+
+      {aba === 'ativas' && (
+        <>
+          {!pedidos.carregando && ativas.length === 0 && (
+            <p className="vazio">🛵<br />Nenhuma corrida no momento.<br />Fique disponível para receber pedidos.</p>
+          )}
+          {ativas.map((pedido) => (
+            <CardCorrida
+              key={pedido.id}
+              pedido={pedido}
+              loja={lojaDoPedido(pedido.lojaId)}
+              nomeDoProduto={nomeDoProduto}
+              onRetirar={retirar}
+              onEntregar={entregar}
+            />
+          ))}
+        </>
       )}
 
-      {finalizadas.length > 0 && (
-        <>
-          <h2 className="titulo-secao">Entregas feitas</h2>
+      {aba === 'finalizadas' && (
+        finalizadas.length === 0 ? (
+          <p className="vazio">📦<br />Você ainda não finalizou nenhuma corrida.</p>
+        ) : (
           <div className="card">
             {finalizadas.map((pedido) => (
               <div key={pedido.id} className="item-lista">
                 <div className="cresce">
                   <strong>Pedido #{pedido.id}</strong>
                   <div className="nota">
-                    {nomeDaLoja(pedido.lojaId)?.nome ?? `Loja ${pedido.lojaId}`} → {pedido.enderecoEntrega.rua}
+                    {lojaDoPedido(pedido.lojaId)?.nome ?? `Loja ${pedido.lojaId}`} → {pedido.enderecoEntrega.rua}
                   </div>
                 </div>
                 <span className="nota">{dataHora(pedido.dataCriacao)}</span>
@@ -133,9 +153,26 @@ export function MinhaEntrega() {
               </div>
             ))}
           </div>
-        </>
+        )
       )}
     </>
+  );
+}
+
+function CampoCodigo({ valor, onMudar }: { valor: string; onMudar: (valor: string) => void }) {
+  return (
+    <label className="campo-pequeno">
+      Código
+      <input
+        required
+        inputMode="numeric"
+        pattern="\d{4}"
+        maxLength={4}
+        placeholder="0000"
+        value={valor}
+        onChange={(e) => onMudar(e.target.value.replace(/\D/g, ''))}
+      />
+    </label>
   );
 }
 
@@ -145,10 +182,16 @@ function CardCorrida({
   pedido: Pedido;
   loja?: { nome: string; endereco: string };
   nomeDoProduto: (id: number) => string;
-  onRetirar: (pedido: Pedido) => void;
+  onRetirar: (pedido: Pedido, codigo: string) => Promise<boolean>;
   onEntregar: (pedido: Pedido, pin: string) => Promise<boolean>;
 }) {
+  const [codigo, setCodigo] = useState('');
   const [pin, setPin] = useState('');
+
+  async function enviarCodigo(e: FormEvent) {
+    e.preventDefault();
+    if (await onRetirar(pedido, codigo)) setCodigo('');
+  }
 
   async function enviarPin(e: FormEvent) {
     e.preventDefault();
@@ -186,29 +229,26 @@ function CardCorrida({
       </ul>
 
       {pedido.status === 'ENTREGA_ACEITA' && (
-        <div className="linha acoes">
-          <span className="nota">Chegou na loja e pegou o pedido?</span>
-          <button className="botao" onClick={() => onRetirar(pedido)}>Confirmar retirada</button>
-        </div>
+        <form className="linha acoes" onSubmit={enviarCodigo}>
+          <span className="nota cresce">Chegou na loja? Peça o código de retirada a ela.</span>
+          <CampoCodigo valor={codigo} onMudar={setCodigo} />
+          <button className="botao">Confirmar retirada</button>
+        </form>
       )}
 
-      {pedido.status === 'EM_ENTREGA' && (
+      {pedido.status === 'EM_ENTREGA' && !pedido.entregaConfirmadaPeloEntregador && (
         <form className="linha acoes" onSubmit={enviarPin}>
-          <span className="nota cresce">Peça ao cliente o código de entrega.</span>
-          <label className="campo-pequeno">
-            Código
-            <input
-              required
-              inputMode="numeric"
-              pattern="\d{4}"
-              maxLength={4}
-              placeholder="0000"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            />
-          </label>
-          <button className="botao">Finalizar entrega</button>
+          <span className="nota cresce">
+            Peça ao cliente o código de entrega.
+            {pedido.recebimentoConfirmadoPeloCliente && ' O cliente já confirmou que recebeu.'}
+          </span>
+          <CampoCodigo valor={pin} onMudar={setPin} />
+          <button className="botao">Confirmar entrega</button>
         </form>
+      )}
+
+      {pedido.status === 'EM_ENTREGA' && pedido.entregaConfirmadaPeloEntregador && (
+        <p className="nota acoes">✅ Você confirmou. Falta o cliente tocar em "Recebi" no app dele.</p>
       )}
     </div>
   );

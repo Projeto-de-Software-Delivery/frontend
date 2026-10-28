@@ -209,6 +209,11 @@ span.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; 
 .esgotado { color: var(--cor); }
 
 /* ===== Entregador ===== */
+.abas { display: flex; gap: 0.25rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--borda); }
+.abas button { font: inherit; font-weight: 500; color: var(--cinza); background: none; border: none; border-bottom: 2px solid transparent; padding: 0.6rem 0.9rem; margin-bottom: -1px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; }
+.abas button:hover { color: var(--texto); }
+.abas button.ativa { color: var(--texto); border-bottom-color: var(--cor); }
+.contagem-aba { font-size: 0.72rem; font-weight: 600; background: var(--fundo); border: 1px solid var(--borda); border-radius: 99px; padding: 0 0.45rem; }
 .rota { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .parada { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--borda); border-radius: 8px; }
 .parada.atual { border-color: var(--cor); background: var(--cor-clara); }

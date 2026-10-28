@@ -87,6 +87,11 @@ export interface Pedido {
   dataCriacao: string;
   pin: string;
   entregadorId: string | null;
+  /** A loja mostra, o entregador digita na retirada. */
+  codigoRetirada: string;
+  /** A entrega só termina com as duas confirmações: entregador (PIN) e cliente ("Recebi"). */
+  entregaConfirmadaPeloEntregador: boolean;
+  recebimentoConfirmadoPeloCliente: boolean;
 }
 
 export interface CriarPedidoRequest {
