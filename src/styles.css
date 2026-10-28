@@ -56,6 +56,7 @@ label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; 
 .botao:disabled { background: var(--borda); color: var(--cinza-claro); cursor: not-allowed; }
 .botao-claro { background: #fff; color: var(--texto); font-weight: 500; padding: 0.55rem 0.95rem; border: 1px solid var(--borda); }
 .botao-claro:hover { background: var(--fundo); }
+a.botao-claro { text-decoration: none; }
 .botao-x { background: none; color: var(--cinza-claro); padding: 0.4rem 0.55rem; }
 .botao-x:hover { background: var(--cor-clara); color: var(--cor); }
 .link-pequeno { background: none; border: none; padding: 0; font: inherit; font-size: 0.85rem; color: var(--cinza); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -88,6 +89,9 @@ label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; 
 .topo nav a { color: var(--cinza); text-decoration: none; padding: 0.45rem 0.8rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; }
 .topo nav a:hover { color: var(--texto); background: var(--fundo); }
 .topo nav a.active { color: var(--texto); background: var(--fundo); }
+.botao-carrinho { position: relative; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--texto); text-decoration: none; font-weight: 500; font-size: 0.9rem; padding: 0.45rem 0.8rem; border: 1px solid var(--borda); border-radius: 8px; }
+.botao-carrinho:hover, .botao-carrinho.active { background: var(--fundo); }
+.botao-carrinho .contagem { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: var(--cor); color: #fff; font-size: 0.72rem; font-weight: 700; display: grid; place-items: center; }
 .tag-mock { font-size: 0.75rem; font-weight: 500; color: #93370d; background: #fffaeb; border: 1px solid #fedf89; padding: 0.15rem 0.55rem; border-radius: 99px; }
 .pagina { max-width: 1040px; margin: 0 auto; padding: 2rem 1rem 4rem; }
 
@@ -199,6 +203,8 @@ span.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; 
 .contador { display: flex; align-items: center; gap: 0.25rem; border: 1px solid var(--borda); border-radius: 8px; padding: 0.15rem; }
 .contador button { width: 28px; height: 28px; background: none; font-size: 1rem; color: var(--cinza); }
 .contador button:hover { background: var(--fundo); color: var(--texto); }
+.contador button:disabled { color: var(--borda); cursor: not-allowed; background: none; }
+.preco-item { min-width: 5.5rem; text-align: right; }
 .contador span { min-width: 2.5ch; text-align: center; font-weight: 600; font-size: 0.9rem; }
 .esgotado { color: var(--cor); }
 
@@ -210,6 +216,7 @@ span.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; 
 /* ===== Celular ===== */
 @media (max-width: 640px) {
   .area { display: none; }
+  .rotulo-carrinho { display: none; }
   .destaque { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 0 3rem; }
   .destaque h1 { font-size: 2.2rem; }
   .pedido-exemplo { transform: none; }

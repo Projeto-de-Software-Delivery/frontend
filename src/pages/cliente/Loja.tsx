@@ -1,7 +1,7 @@
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { adicionarAoCarrinho } from '../../api/carrinho';
+import { adicionarAoCarrinho, buscarCarrinho } from '../../api/carrinho';
 import { buscarLoja } from '../../api/lojas';
 import { listarProdutos } from '../../api/produtos';
 import { Foto } from '../../components/Foto';
@@ -14,12 +14,17 @@ export function Loja() {
   const lojaId = Number(useParams().lojaId);
   const loja = useCarregar(() => buscarLoja(lojaId), [lojaId]);
   const produtos = useCarregar(() => listarProdutos(lojaId), [lojaId]);
+  const carrinho = useCarregar(() => buscarCarrinho(clienteId), [clienteId]);
   const { erro, executar } = useAcao();
   const [aviso, setAviso] = useState('');
 
+  // o carrinho não aceita mais unidades do que o estoque, então o botão trava antes do erro
+  const noCarrinho = (produto: Produto) =>
+    carrinho.dados?.itens.find((item) => item.produtoId === produto.id)?.quantidade ?? 0;
+
   async function adicionar(produto: Produto) {
     setAviso('');
-    if (await executar(() => adicionarAoCarrinho(clienteId, produto.id, 1))) {
+    if (await executar(async () => carrinho.setDados(await adicionarAoCarrinho(clienteId, produto.id, 1)))) {
       setAviso(`${produto.foto} ${produto.nome} foi para o carrinho`);
     }
   }
@@ -58,10 +63,12 @@ export function Loja() {
                 )}
                 <div className="linha">
                   <strong>{dinheiro(produto.preco)}</strong>
-                  {produto.estoque > 0 ? (
-                    <button className="botao" onClick={() => adicionar(produto)}>+ Adicionar</button>
-                  ) : (
+                  {produto.estoque === 0 ? (
                     <span className="nota">Esgotado</span>
+                  ) : noCarrinho(produto) >= produto.estoque ? (
+                    <span className="nota">Tudo no carrinho</span>
+                  ) : (
+                    <button className="botao" onClick={() => adicionar(produto)}>+ Adicionar</button>
                   )}
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { BotaoCarrinho } from './components/BotaoCarrinho';
 import { Layout } from './components/Layout';
 import { CadastroCliente, CadastroEntregador, CadastroLoja } from './pages/Cadastro';
 import { Home } from './pages/Home';
@@ -17,9 +18,9 @@ function AreaCliente() {
       titulo="Cliente"
       links={[
         { para: `/cliente/${clienteId}`, texto: 'Lojas' },
-        { para: `/cliente/${clienteId}/carrinho`, texto: 'Carrinho' },
         { para: `/cliente/${clienteId}/pedidos`, texto: 'Meus pedidos' },
       ]}
+      direita={<BotaoCarrinho clienteId={Number(clienteId)} />}
     />
   );
 }
