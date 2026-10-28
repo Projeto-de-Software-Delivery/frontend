@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { BotaoCarrinho } from './components/BotaoCarrinho';
 import { Layout } from './components/Layout';
 import { CadastroCliente, CadastroEntregador, CadastroLoja } from './pages/Cadastro';
+import { Entrar } from './pages/Entrar';
 import { Home } from './pages/Home';
 import { Carrinho } from './pages/cliente/Carrinho';
 import { Loja } from './pages/cliente/Loja';
@@ -54,6 +55,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/entrar/:tipo" element={<Entrar />} />
       <Route path="/cadastro/cliente" element={<CadastroCliente />} />
       <Route path="/cadastro/loja" element={<CadastroLoja />} />
       <Route path="/cadastro/entregador" element={<CadastroEntregador />} />

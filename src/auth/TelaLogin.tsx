@@ -1,16 +1,20 @@
-import { Bike, ShieldCheck, ShoppingBag, Store } from 'lucide-react';
+import { ArrowLeft, Bike, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Progresso } from '../components/Progresso';
+import { ehTipoUsuario, PERFIS, type TipoUsuario } from '../pages/Entrar';
 import { LoginButton } from './LoginButton';
 
-const PERFIS = [
-  { icone: <ShoppingBag size={22} />, titulo: 'Para clientes', texto: 'Escolha a loja, monte o carrinho e acompanhe cada etapa do pedido.' },
-  { icone: <Store size={22} />, titulo: 'Para lojas', texto: 'Receba pedidos, aceite ou recuse e mantenha o cardápio em dia.' },
-  { icone: <Bike size={22} />, titulo: 'Para entregadores', texto: 'Fique disponível, retire na loja e finalize com o código do cliente.' },
-];
+const TIPOS: TipoUsuario[] = ['cliente', 'loja', 'entregador'];
 
-/** Tela de quem ainda não entrou (fora do modo mock): apresenta o app e chama o login do Auth0. */
+/**
+ * Tela de quem ainda não entrou (fora do modo mock). Cada tipo de usuário tem o seu link:
+ * /entrar/cliente, /entrar/loja e /entrar/entregador. Em "/", mostra os três.
+ */
 export function TelaLogin() {
+  const { tipo } = useParams();
+  if (ehTipoUsuario(tipo)) return <TelaLoginDoTipo tipo={tipo} />;
+
   return (
     <div className="home">
       <header className="home-topo">
@@ -18,7 +22,6 @@ export function TelaLogin() {
           <span className="logo"><Bike size={18} /></span>
           Delivery
         </span>
-        <LoginButton claro />
       </header>
 
       <section className="destaque">
@@ -29,7 +32,7 @@ export function TelaLogin() {
             Peça das suas lojas favoritas, acompanhe cada etapa do pedido e receba com o código de entrega.
           </p>
           <div className="chamada-login">
-            <LoginButton grande />
+            <LoginButton tipo="cliente" grande />
             <span className="nota com-icone"><ShieldCheck size={15} /> Login seguro com Auth0</span>
           </div>
         </div>
@@ -52,16 +55,36 @@ export function TelaLogin() {
         </div>
       </section>
 
+      <h2 className="titulo-entrar">Como você quer entrar?</h2>
       <section className="cards-home">
-        {PERFIS.map((perfil) => (
-          <div key={perfil.titulo} className="card card-home">
-            <span className="icone">{perfil.icone}</span>
-            <h3>{perfil.titulo}</h3>
-            <p>{perfil.texto}</p>
+        {TIPOS.map((t) => (
+          <div key={t} className="card card-home">
+            <span className="icone">{PERFIS[t].icone}</span>
+            <h3>Para {t === 'loja' ? 'lojas' : `${t}s`}</h3>
+            <p>{PERFIS[t].texto}</p>
+            <LoginButton tipo={t} />
+            <Link to={`/entrar/${t}`} className="link-pequeno">Link de entrada: /entrar/{t}</Link>
           </div>
         ))}
       </section>
     </div>
+  );
+}
+
+/** /entrar/{tipo} sem login: só o login daquele tipo. */
+function TelaLoginDoTipo({ tipo }: { tipo: TipoUsuario }) {
+  const perfil = PERFIS[tipo];
+  return (
+    <main className="cadastro">
+      <Link to="/" className="voltar"><ArrowLeft size={16} /> Início</Link>
+      <div className="card card-home">
+        <span className="icone">{perfil.icone}</span>
+        <h1>Entrar como {perfil.titulo}</h1>
+        <p>{perfil.texto}</p>
+        <LoginButton tipo={tipo} grande />
+        <span className="nota com-icone"><ShieldCheck size={15} /> Login seguro com Auth0</span>
+      </div>
+    </main>
   );
 }
 

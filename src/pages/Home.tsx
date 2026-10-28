@@ -1,24 +1,11 @@
-import { ArrowRight, Bike, ShoppingBag, Store } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { listarClientes } from '../api/clientes';
-import { listarEntregadores } from '../api/entregadores';
+import { Bike } from 'lucide-react';
 import { USE_MOCK } from '../api/http';
-import { listarLojas } from '../api/lojas';
 import { resetarMock } from '../api/mock';
 import { Progresso } from '../components/Progresso';
-import { useCarregar } from '../util';
+import { CardPerfil } from './Entrar';
 
 /** Tela inicial: apresenta o app e escolhe se vai entrar como cliente, loja ou entregador. */
 export function Home() {
-  const navigate = useNavigate();
-  const clientes = useCarregar(() => listarClientes(), []);
-  const lojas = useCarregar(() => listarLojas(), []);
-  const entregadores = useCarregar(() => listarEntregadores(), []);
-  const [clienteId, setClienteId] = useState('');
-  const [lojaId, setLojaId] = useState('');
-  const [entregadorId, setEntregadorId] = useState('');
-
   return (
     <div className="home">
       <header className="home-topo">
@@ -61,59 +48,11 @@ export function Home() {
       <section>
         <h2 className="titulo-entrar">Como você quer entrar?</h2>
         <div className="cards-home">
-          <div className="card card-home">
-            <span className="icone"><ShoppingBag size={22} /></span>
-            <h3>Sou cliente</h3>
-            <p>Ver lojas, montar o carrinho e acompanhar pedidos.</p>
-            <select value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
-              <option value="">Escolha um cliente…</option>
-              {clientes.dados?.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
-              ))}
-            </select>
-            <button className="botao" disabled={!clienteId} onClick={() => navigate(`/cliente/${clienteId}`)}>
-              Entrar <ArrowRight size={16} />
-            </button>
-            <Link to="/cadastro/cliente" className="link-pequeno">Criar conta de cliente</Link>
-          </div>
-
-          <div className="card card-home">
-            <span className="icone"><Store size={22} /></span>
-            <h3>Sou loja</h3>
-            <p>Aceitar pedidos e cuidar do cardápio.</p>
-            <select value={lojaId} onChange={(e) => setLojaId(e.target.value)}>
-              <option value="">Escolha uma loja…</option>
-              {lojas.dados?.map((l) => (
-                <option key={l.id} value={l.id}>{l.nome}</option>
-              ))}
-            </select>
-            <button className="botao" disabled={!lojaId} onClick={() => navigate(`/loja/${lojaId}`)}>
-              Entrar <ArrowRight size={16} />
-            </button>
-            <Link to="/cadastro/loja" className="link-pequeno">Cadastrar minha loja</Link>
-          </div>
-
-          <div className="card card-home">
-            <span className="icone"><Bike size={22} /></span>
-            <h3>Sou entregador</h3>
-            <p>Ficar disponível, retirar na loja e entregar com o código do cliente.</p>
-            <select value={entregadorId} onChange={(e) => setEntregadorId(e.target.value)}>
-              <option value="">Escolha um entregador…</option>
-              {entregadores.dados?.map((en) => (
-                <option key={en.id} value={en.id}>{en.nome}</option>
-              ))}
-            </select>
-            <button className="botao" disabled={!entregadorId} onClick={() => navigate(`/entregador/${entregadorId}`)}>
-              Entrar <ArrowRight size={16} />
-            </button>
-            <Link to="/cadastro/entregador" className="link-pequeno">Quero ser entregador</Link>
-          </div>
+          <CardPerfil tipo="cliente" />
+          <CardPerfil tipo="loja" />
+          <CardPerfil tipo="entregador" />
         </div>
       </section>
-
-      {(clientes.erro || lojas.erro || entregadores.erro) && (
-        <p className="erro">{clientes.erro || lojas.erro || entregadores.erro}</p>
-      )}
 
       {USE_MOCK && (
         <p className="nota rodape">
