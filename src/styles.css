@@ -218,6 +218,101 @@ span.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; 
 .parada { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--borda); border-radius: 8px; }
 .parada.atual { border-color: var(--cor); background: var(--cor-clara); }
 
+/* ===== Autocomplete de Endereço ===== */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+.autocomplete-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.autocomplete-icone-busca {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--cinza-claro);
+  pointer-events: none;
+}
+.autocomplete-spinner {
+  position: absolute;
+  right: 0.75rem;
+  color: var(--cinza);
+  animation: girar 1s linear infinite;
+  pointer-events: none;
+}
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.autocomplete-input {
+  padding-left: 2.3rem !important;
+  padding-right: 2.2rem !important;
+}
+.autocomplete-sugestoes {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  box-shadow: var(--sombra-hover);
+  list-style: none;
+  padding: 0.35rem 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.autocomplete-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+}
+.autocomplete-item:hover, .autocomplete-item.ativo {
+  background: var(--fundo);
+}
+.autocomplete-item-icone {
+  color: var(--cor);
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+.autocomplete-item-conteudo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.autocomplete-item-titulo {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--texto);
+}
+.autocomplete-item-subtitulo {
+  font-size: 0.78rem;
+  color: var(--cinza);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.autocomplete-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--verde);
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  width: fit-content;
+}
+
 /* ===== Celular ===== */
 @media (max-width: 640px) {
   .area { display: none; }

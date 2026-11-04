@@ -5,8 +5,9 @@ import { alterarQuantidade, buscarCarrinho, removerDoCarrinho } from '../../api/
 import { listarLojas } from '../../api/lojas';
 import { criarPedido } from '../../api/pedidos';
 import { listarProdutos } from '../../api/produtos';
+import { AutocompleteEndereco } from '../../components/AutocompleteEndereco';
 import { Foto } from '../../components/Foto';
-import type { ItemCarrinho } from '../../types';
+import type { EnderecoEntrega, ItemCarrinho } from '../../types';
 import { dinheiro, LAT_LNG_PADRAO, nomePorId, useAcao, useCarregar } from '../../util';
 
 export function Carrinho() {
@@ -16,7 +17,10 @@ export function Carrinho() {
   const produtos = useCarregar(() => listarProdutos(), []);
   const lojas = useCarregar(() => listarLojas(), []);
   const { erro, executar } = useAcao();
-  const [rua, setRua] = useState('');
+  const [enderecoEntrega, setEnderecoEntrega] = useState<EnderecoEntrega>({
+    rua: '',
+    ...LAT_LNG_PADRAO,
+  });
 
   const produto = (id: number) => produtos.dados?.find((p) => p.id === id);
 
@@ -45,7 +49,7 @@ export function Carrinho() {
       await criarPedido(clienteId, {
         lojaId,
         itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade })),
-        enderecoEntrega: { rua, ...LAT_LNG_PADRAO },
+        enderecoEntrega,
       });
       // o backend não limpa o carrinho sozinho, então tiramos os itens que viraram pedido
       await Promise.all(itens.map((item) => removerDoCarrinho(clienteId, item.id)));
@@ -65,10 +69,13 @@ export function Carrinho() {
       )}
 
       {itensPorLoja.size > 0 && (
-        <label className="card campo-endereco">
-          Endereço de entrega
-          <input value={rua} onChange={(e) => setRua(e.target.value)} placeholder="Rua, número, bairro" />
-        </label>
+        <div className="card campo-endereco">
+          <label style={{ marginBottom: '0.4rem', display: 'block' }}>Endereço de entrega</label>
+          <AutocompleteEndereco
+            endereco={enderecoEntrega}
+            onChange={setEnderecoEntrega}
+          />
+        </div>
       )}
 
       {[...itensPorLoja].map(([lojaId, itens]) => {
@@ -113,7 +120,7 @@ export function Carrinho() {
               <strong>Total {dinheiro(total)}</strong>
               <button
                 className="botao"
-                disabled={!rua.trim() || algumPassaDoEstoque}
+                disabled={!enderecoEntrega.rua.trim() || algumPassaDoEstoque}
                 title={algumPassaDoEstoque ? 'Ajuste as quantidades ao estoque' : undefined}
                 onClick={() => fazerPedido(lojaId, itens)}
               >
