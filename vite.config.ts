@@ -8,7 +8,7 @@ export default defineConfig({
     // Quando sair do mock: tudo que começa com /api vai para o API Gateway.
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://18.204.243.227:8080',
         changeOrigin: true,
         rewrite: (caminho) => caminho.replace(/^\/api/, ''),
       },

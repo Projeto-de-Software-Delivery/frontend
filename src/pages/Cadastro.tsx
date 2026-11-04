@@ -14,7 +14,7 @@ function PreencherAuth0({ onDados }: { onDados: (dados: { nome?: string; email?:
     if (user) {
       onDados({ nome: user.name, email: user.email });
     }
-  }, [user, onDados]);
+  }, [user]);
   return null;
 }
 
